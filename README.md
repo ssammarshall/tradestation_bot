@@ -6,14 +6,14 @@ A Python bot that connects to the TradeStation API to stream and retrieve market
 
 - Python 3.13+
 - [Poetry](https://python-poetry.org/docs/#installation)
-- A TradeStation account with API credentials
+- A [TradeStation](https://www.tradestation.com/platforms-and-tools/trading-api/) account with API credentials
 
 ## Setup
 
 ### 1. Clone the repository
 
 ```bash
-git clone <https://github.com/ssammarshall/tradestation_bot>
+git clone https://github.com/ssammarshall/tradestation_bot
 cd tradestation_bot
 ```
 
