@@ -1,0 +1,6 @@
+[[streams]]
+symbol = "@MNQ"
+unit = "Minute"
+interval = 1
+barsback = 10
+session_template = "Default"
