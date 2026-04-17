@@ -10,7 +10,6 @@ from app.schemas.orders import (
     TradeAction,
 )
 
-ACCOUNT_ID = "YOUR_ACCOUNT_ID"
 SYMBOL = "@MNQ"
 QUANTITY = "1"
 
@@ -23,7 +22,7 @@ order_service = OrderService(client)
 # ---------------------------------------------------------------------------
 
 order = OrderRequest(
-    account_id=ACCOUNT_ID,
+    account_id=settings.active_account_id,
     symbol=SYMBOL,
     quantity=QUANTITY,
     trade_action=TradeAction.BUY,
@@ -43,7 +42,7 @@ for result in response.orders:
 # ---------------------------------------------------------------------------
 
 entry = OrderRequest(
-    account_id=ACCOUNT_ID,
+    account_id=settings.active_account_id,
     symbol=SYMBOL,
     quantity=QUANTITY,
     trade_action=TradeAction.BUY,
