@@ -10,7 +10,7 @@ from app.schemas.orders import (
     TradeAction,
 )
 
-SYMBOL = "@MNQ"
+SYMBOL = "MNQ"
 QUANTITY = "1"
 
 settings = Settings()
@@ -56,10 +56,3 @@ bracket = BracketOrderRequest(
     stop_loss_price="18950.00",
     take_profit_price="19100.00",
 )
-
-group_response = order_service.place_bracket_order(bracket)
-for result in group_response.orders:
-    if result.is_error:
-        print(f"bracket leg error: {result.error}")
-    else:
-        print(f"bracket leg placed: id={result.order_id} msg={result.message}")
