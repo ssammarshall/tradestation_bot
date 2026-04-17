@@ -10,7 +10,7 @@ from app.schemas.orders import (
     TradeAction,
 )
 
-SYMBOL = "MNQ"
+SYMBOL = "MNQM26"
 QUANTITY = "1"
 
 settings = Settings()
