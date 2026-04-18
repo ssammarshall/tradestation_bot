@@ -49,11 +49,12 @@ cp .env.example .env
 ```
 
 ```env
-CLIENT_ID=your_client_id
-CLIENT_SECRET=your_client_secret
-REFRESH_TOKEN=your_refresh_token
-ACCOUNT_ID=your_account_id
-TS_ENV=sim  # Use "sim" for simulation or "live" for live trading
+CLIENT_ID=YOUR_CLIENT_ID
+CLIENT_SECRET=YOUR_CLIENT_SECRET
+REFRESH_TOKEN=YOUR_REFRESH_TOKEN
+TS_ENV=sim # Use "sim" for simulation or "live" for live trading
+ACCOUNT_ID=YOUR_ACCOUNT_ID
+SIM_ACCOUNT_ID=YOUR_SIM_ACCOUNT_ID
 ```
 
 ### 5. Configure streams
