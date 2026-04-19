@@ -1,5 +1,5 @@
 [[streams]]
-symbol = "@MNQ"
+symbol = "MNQ"
 unit = "Minute"
 interval = 1
 barsback = 10

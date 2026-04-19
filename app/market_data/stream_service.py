@@ -12,7 +12,7 @@ class StreamService:
 
     def stream_bars(self, params: BarHistoryParams):
         response = self.client.get(
-            f"/marketdata/stream/barcharts/{params.symbol}",
+            f"/marketdata/stream/barcharts/@{params.symbol}",
             params=params.to_query_params(),
             stream=True,
             timeout=60,
