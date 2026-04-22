@@ -4,9 +4,10 @@ from app.strategies.entries.base_entry import BaseEntry
 from app.strategies.setups.base_setup import BaseSetup
 
 
-class BaseStrategy:
+class Strategy:
     def __init__(
         self,
+        name: str,
         symbol: str,
         setup: BaseSetup,
         entry: BaseEntry,
@@ -14,6 +15,7 @@ class BaseStrategy:
         trade_window_end: time,
         max_num_of_trades: int,
     ) -> None:
+        self.name = name
         self.symbol = symbol
         self.setup = setup
         self.entry = entry
