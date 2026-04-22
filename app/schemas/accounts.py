@@ -115,6 +115,44 @@ class BODBalancesResponse:
 
 
 # ---------------------------------------------------------------------------
+# Positions
+# ---------------------------------------------------------------------------
+
+@dataclass
+class Position:
+    account_id: str
+    symbol: Optional[str] = None
+    quantity: Optional[str] = None
+    long_short: Optional[str] = None  # "Long" or "Short"
+    average_price: Optional[str] = None
+    market_value: Optional[str] = None
+    unrealized_profit_loss: Optional[str] = None
+    todays_profit_loss: Optional[str] = None
+
+    @classmethod
+    def from_dict(cls, data: dict) -> Position:
+        return cls(
+            account_id=data.get("AccountID", ""),
+            symbol=data.get("Symbol"),
+            quantity=data.get("Quantity"),
+            long_short=data.get("LongShort"),
+            average_price=data.get("AveragePrice"),
+            market_value=data.get("MarketValue"),
+            unrealized_profit_loss=data.get("UnrealizedProfitLoss"),
+            todays_profit_loss=data.get("TodaysProfitLoss"),
+        )
+
+
+@dataclass
+class PositionsResponse:
+    positions: list[Position] = field(default_factory=list)
+
+    @classmethod
+    def from_dict(cls, data: dict) -> PositionsResponse:
+        return cls(positions=[Position.from_dict(p) for p in data.get("Positions", [])])
+
+
+# ---------------------------------------------------------------------------
 # Account Orders
 # ---------------------------------------------------------------------------
 
