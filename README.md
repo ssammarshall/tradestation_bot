@@ -80,6 +80,12 @@ Before running the bot, authenticate with TradeStation to obtain a refresh token
 python main.py auth
 ```
 
+### View account info
+
+```bash
+python main.py account
+```
+
 ### Start the bot
 
 ```bash
