@@ -19,3 +19,6 @@ class TradeStationClient:
     def post(self, path: str, **kwargs):
         url = f"{self.settings.api_base_url}{path}"
         return self.http.request("POST", url, **kwargs)
+
+    def close(self):
+        self.http.close()

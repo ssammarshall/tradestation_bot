@@ -23,3 +23,6 @@ class AuthenticatedSession:
 
         response.raise_for_status()
         return response
+
+    def close(self):
+        self.session.close()

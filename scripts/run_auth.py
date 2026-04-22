@@ -13,23 +13,26 @@ print(
     f"&scope=openid%20offline_access%20profile%20MarketData%20ReadAccount%20Trade"
 )
 
-code = input("Paste returned code: ").strip()
+try:
+    code = input("Paste returned code: ").strip()
 
-response = requests.post(
-    f"{settings.auth_base_url}/oauth/token",
-    headers={"Content-Type": "application/x-www-form-urlencoded"},
-    data={
-        "grant_type": "authorization_code",
-        "client_id": settings.client_id,
-        "client_secret": settings.client_secret,
-        "code": code,
-        "redirect_uri": settings.redirect_uri,
-    },
-    timeout=30,
-)
+    response = requests.post(
+        f"{settings.auth_base_url}/oauth/token",
+        headers={"Content-Type": "application/x-www-form-urlencoded"},
+        data={
+            "grant_type": "authorization_code",
+            "client_id": settings.client_id,
+            "client_secret": settings.client_secret,
+            "code": code,
+            "redirect_uri": settings.redirect_uri,
+        },
+        timeout=30,
+    )
 
-response.raise_for_status()
-data = response.json()
+    response.raise_for_status()
+    data = response.json()
 
-print("\nSave this REFRESH_TOKEN in your .env:\n")
-print(data["refresh_token"])
+    print("\nSave this REFRESH_TOKEN in your .env:\n")
+    print(data["refresh_token"])
+except KeyboardInterrupt:
+    print("\nShutting down.")

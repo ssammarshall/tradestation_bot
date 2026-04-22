@@ -18,14 +18,17 @@ class StreamService:
             timeout=60,
         )
 
-        for line in response.iter_lines(decode_unicode=True):
-            if not line:
-                continue
+        try:
+            for line in response.iter_lines(decode_unicode=True):
+                if not line:
+                    continue
 
-            try:
-                payload = json.loads(line)
-            except json.JSONDecodeError:
-                continue
+                try:
+                    payload = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
 
-            event = StreamBarEvent.from_dict(payload)
-            yield event
+                event = StreamBarEvent.from_dict(payload)
+                yield event
+        finally:
+            response.close()
