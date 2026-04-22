@@ -72,6 +72,16 @@ session_template = "Default"
 
 ## Running
 
+### Authenticate
+
+Before running the bot, authenticate with TradeStation to obtain a refresh token:
+
 ```bash
-python main.py
+python main.py auth
+```
+
+### Start the bot
+
+```bash
+python main.py run
 ```
