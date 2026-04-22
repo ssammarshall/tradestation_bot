@@ -11,11 +11,13 @@ from app.schemas.accounts import (
 )
 from app.schemas.orders import OrderRequest, OrderResponse, TradeAction
 from app.broker.tradestation_client import TradeStationClient
+from app.orders.order_service import OrderService
 
 
 class AccountService:
     def __init__(self, client: TradeStationClient):
         self.client = client
+        self.order_service = OrderService(client)
 
     def get_accounts(self) -> AccountsResponse:
         response = self.client.get("/brokerage/accounts")
@@ -67,8 +69,5 @@ class AccountService:
                 quantity=position.quantity.lstrip("-"),
                 trade_action=trade_action,
             )
-            response = self.client.post(
-                "/orderexecution/orders", json=order.to_dict(), timeout=30
-            )
-            results.append(OrderResponse.from_dict(response.json()))
+            results.append(self.order_service.place_order(order))
         return results
