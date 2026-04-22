@@ -1,6 +1,9 @@
-from typing import Protocol
+from abc import ABC, abstractmethod
 
-class BaseSetup(Protocol):
-    def is_valid(self) -> bool:
-        """Check if the setup is valid and can be executed."""
-        ...
+
+class BaseSetup(ABC):
+    def __init__(self) -> None:
+        pass
+
+    @abstractmethod
+    def is_valid(self) -> bool: ...
