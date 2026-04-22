@@ -7,7 +7,9 @@ from app.schemas.accounts import (
     BalancesResponse,
     BODBalancesResponse,
     AccountOrdersResponse,
+    PositionsResponse,
 )
+from app.schemas.orders import OrderRequest, OrderResponse, TradeAction
 from app.broker.tradestation_client import TradeStationClient
 
 
@@ -42,3 +44,31 @@ class AccountService:
             params=params,
         )
         return AccountOrdersResponse.from_dict(response.json())
+
+    def get_positions(self, account_id: str) -> PositionsResponse:
+        response = self.client.get(f"/brokerage/accounts/{account_id}/positions")
+        return PositionsResponse.from_dict(response.json())
+
+    def close_all_positions(self, account_id: str) -> list[OrderResponse]:
+        positions = self.get_positions(account_id).positions
+        results = []
+        for position in positions:
+            if not position.symbol or not position.quantity:
+                continue
+            qty = float(position.quantity)
+            if qty == 0:
+                continue
+            trade_action = (
+                TradeAction.SELL if position.long_short == "Long" else TradeAction.BUY_TO_COVER
+            )
+            order = OrderRequest(
+                account_id=account_id,
+                symbol=position.symbol,
+                quantity=position.quantity.lstrip("-"),
+                trade_action=trade_action,
+            )
+            response = self.client.post(
+                "/orderexecution/orders", json=order.to_dict(), timeout=30
+            )
+            results.append(OrderResponse.from_dict(response.json()))
+        return results
