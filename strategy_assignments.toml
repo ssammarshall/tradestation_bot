@@ -1,0 +1,8 @@
+[[assignments]]
+name = "ict_liquidity_sweep_ny_session_strategy"
+symbol = "MNQ"
+setup = "ny_ifvg_liquidity_sweep_setup"
+entry = "retracement_entry"
+trade_window_start = "09:30"
+trade_window_end = "11:30"
+max_num_of_trades = 2
