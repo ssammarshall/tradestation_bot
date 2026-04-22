@@ -1,6 +1,27 @@
 import tomllib
 from app.schemas.bars import BarHistoryParams, BarUnit, SessionTemplate
+from app.strategies.strategy import Strategy
 
+
+def load_strategy_assignments(path: str) -> list[Strategy]:
+    with open(path, "rb") as f:
+        data = tomllib.load(f)
+    
+    assignments = []
+    for item in data.get("assignments", []):
+        assignments.append(
+            Strategy(
+                name=item["name"],
+                symbol=item["symbol"],
+                setup=item["setup"],
+                entry=item["entry"],
+                trade_window_start=item["trade_window_start"],
+                trade_window_end=item["trade_window_end"],
+                max_num_of_trades=item["max_num_of_trades"],
+            )
+        )
+    
+    return assignments
 
 def load_stream_params(path: str) -> list[BarHistoryParams]:
     with open(path, "rb") as f:
