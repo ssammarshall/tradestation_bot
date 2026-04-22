@@ -1,6 +1,10 @@
 [[assignments]]
 name = "ict_liquidity_sweep_ny_session_strategy"
 symbol = "MNQ"
+unit = "Minute"
+interval = 1
+barsback = 10
+session_template = "Default"
 setup = "ny_ifvg_liquidity_sweep_setup"
 entry = "retracement_entry"
 trade_window_start = "09:30"

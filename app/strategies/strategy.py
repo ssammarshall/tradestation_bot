@@ -1,5 +1,7 @@
 from time import time
+from typing import Optional
 
+from app.schemas.bars import BarHistoryParams
 from app.strategies.entries.base_entry import BaseEntry
 from app.strategies.setups.base_setup import BaseSetup
 
@@ -14,6 +16,7 @@ class Strategy:
         trade_window_start: time,
         trade_window_end: time,
         max_num_of_trades: int,
+        stream: Optional[BarHistoryParams] = None,
     ) -> None:
         self.name = name
         self.symbol = symbol
@@ -22,6 +25,7 @@ class Strategy:
         self.trade_window_start = trade_window_start
         self.trade_window_end = trade_window_end
         self.max_num_of_trades = max_num_of_trades
+        self.stream = stream
         self._setup_confirmed: bool = False
 
     def evaluate(self) -> None:

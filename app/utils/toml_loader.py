@@ -6,9 +6,16 @@ from app.strategies.strategy import Strategy
 def load_strategy_assignments(path: str) -> list[Strategy]:
     with open(path, "rb") as f:
         data = tomllib.load(f)
-    
+
     assignments = []
     for item in data.get("assignments", []):
+        stream = BarHistoryParams(
+            symbol=item["symbol"],
+            unit=BarUnit(item.get("unit", "Minute")),
+            interval=item.get("interval", 1),
+            barsback=item.get("barsback"),
+            session_template=SessionTemplate(item.get("session_template", "Default")),
+        )
         assignments.append(
             Strategy(
                 name=item["name"],
@@ -18,9 +25,10 @@ def load_strategy_assignments(path: str) -> list[Strategy]:
                 trade_window_start=item["trade_window_start"],
                 trade_window_end=item["trade_window_end"],
                 max_num_of_trades=item["max_num_of_trades"],
+                stream=stream,
             )
         )
-    
+
     return assignments
 
 def load_stream_params(path: str) -> list[BarHistoryParams]:
