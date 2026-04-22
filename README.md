@@ -63,7 +63,7 @@ Edit `stream_config.toml` to define which symbols and bar parameters to stream:
 
 ```toml
 [[streams]]
-symbol = "@MNQ"
+symbol = "MNQ"
 unit = "Minute"
 interval = 1
 barsback = 10
