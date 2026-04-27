@@ -14,6 +14,8 @@ class StrategyManager:
 
     def load(self, path: str) -> None:
         for strategy in load_strategy_assignments(path):
+            strategy.setup = self._registry.get_setup(strategy.setup)()
+            strategy.entry = self._registry.get_entry(strategy.entry)()
             self._strategies.append(strategy)
             self._stream_manager.subscribe(
                 strategy.stream,
