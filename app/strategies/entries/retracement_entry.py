@@ -1,6 +1,6 @@
 from decimal import Decimal
 
-from base_entry import BaseEntry
+from app.strategies.entries.base_entry import BaseEntry
 
 class RetracementEntry(BaseEntry):
     def __init__(

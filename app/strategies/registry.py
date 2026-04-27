@@ -1,5 +1,5 @@
-from setups.ny_ifvg_liquidity_sweep_setup import NYIFVGLiquiditySweepSetup
-from entries.retracement_entry import RetracementEntry
+from app.strategies.setups.ny_ifvg_liquidity_sweep_setup import NYIFVGLiquiditySweepSetup
+from app.strategies.entries.retracement_entry import RetracementEntry
 
 
 class StrategyRegistry:

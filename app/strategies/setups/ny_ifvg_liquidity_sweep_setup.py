@@ -1,4 +1,4 @@
-from base_setup import BaseSetup
+from app.strategies.setups.base_setup import BaseSetup
 
 class NYIFVGLiquiditySweepSetup(BaseSetup):
     def __init__(self) -> None:
