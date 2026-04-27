@@ -1,3 +1,7 @@
+from setups.ny_ifvg_liquidity_sweep_setup import NYIFVGLiquiditySweepSetup
+from entries.retracement_entry import RetracementEntry
+
+
 class StrategyRegistry:
     def __init__(self) -> None:
         self._setups: dict[str, object] = {}
@@ -19,6 +23,7 @@ class StrategyRegistry:
 def build_default_registry() -> StrategyRegistry:
     registry = StrategyRegistry()
 
-    # registry.register_setup("example_setup", ExampleSetup)
+    registry.register_setup("ny_ifvg_liquidity_sweep", NYIFVGLiquiditySweepSetup)
+    registry.register_entry("retracement", RetracementEntry)
 
     return registry
