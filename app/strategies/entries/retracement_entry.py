@@ -5,9 +5,9 @@ from app.strategies.entries.base_entry import BaseEntry
 class RetracementEntry(BaseEntry):
     def __init__(
         self,
-        take_profit: Decimal,
-        stop_loss: Decimal,
-        target_price: Decimal,
+        take_profit: Decimal = Decimal(0),
+        stop_loss: Decimal = Decimal(0),
+        target_price: Decimal | None = None,
     ) -> None:
         super().__init__(take_profit, stop_loss, target_price)
 

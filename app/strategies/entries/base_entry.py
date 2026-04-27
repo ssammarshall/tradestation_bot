@@ -5,8 +5,8 @@ from decimal import Decimal
 class BaseEntry(ABC):
     def __init__(
         self,
-        take_profit: Decimal,
-        stop_loss: Decimal,
+        take_profit: Decimal = Decimal(0),
+        stop_loss: Decimal = Decimal(0),
         target_price: Decimal | None = None,
     ) -> None:
         self.take_profit = take_profit
