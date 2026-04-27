@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
 from decimal import Decimal
 
+from app.schemas.bars import Bar
+
 
 class BaseEntry(ABC):
     def __init__(
@@ -14,4 +16,4 @@ class BaseEntry(ABC):
         self.target_price = target_price
 
     @abstractmethod
-    def is_valid(self) -> bool: ...
+    def is_valid(self, bar: Bar) -> bool: ...

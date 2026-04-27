@@ -19,7 +19,7 @@ class StrategyManager:
             self._strategies.append(strategy)
             self._stream_manager.subscribe(
                 strategy.stream,
-                lambda _, s=strategy: s.evaluate(),
+                lambda event, s=strategy: s.evaluate(event),
             )
 
     @property

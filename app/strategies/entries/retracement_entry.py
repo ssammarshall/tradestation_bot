@@ -1,5 +1,6 @@
 from decimal import Decimal
 
+from app.schemas.bars import Bar
 from app.strategies.entries.base_entry import BaseEntry
 
 class RetracementEntry(BaseEntry):
@@ -11,6 +12,6 @@ class RetracementEntry(BaseEntry):
     ) -> None:
         super().__init__(take_profit, stop_loss, target_price)
 
-    def is_valid(self) -> bool:
+    def is_valid(self, bar: Bar) -> bool:
         # Implement the validation logic for the RetracementEntry
         pass

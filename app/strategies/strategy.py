@@ -1,7 +1,7 @@
 from time import time
 from typing import Optional
 
-from app.schemas.bars import BarHistoryParams
+from app.schemas.bars import BarHistoryParams, StreamBarEvent
 from app.strategies.entries.base_entry import BaseEntry
 from app.strategies.setups.base_setup import BaseSetup
 
@@ -28,9 +28,11 @@ class Strategy:
         self.stream = stream
         self._setup_confirmed: bool = False
 
-    def evaluate(self) -> None:
+    def evaluate(self, event: StreamBarEvent) -> None:
+        if not event.is_bar:
+            return
         if not self._setup_confirmed:
-            if self.setup.is_valid():
+            if self.setup.is_valid(event.bar):
                 self._setup_confirmed = True
         else:
-            self.entry.is_valid()
+            self.entry.is_valid(event.bar)
