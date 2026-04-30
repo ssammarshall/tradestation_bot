@@ -41,6 +41,10 @@ class StreamManager:
             callbacks = self._callbacks.get(key, [])
             if callback in callbacks:
                 callbacks.remove(callback)
+            
+            if not callbacks:
+                if key in self._stop_events:
+                    self._stop_events[key].set()
 
     def shutdown(self) -> None:
         with self._lock:
