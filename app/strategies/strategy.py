@@ -27,6 +27,7 @@ class Strategy:
         self.max_num_of_trades = max_num_of_trades
         self.stream = stream
         self._setup_confirmed: bool = False
+        self._is_subscribed: bool = False
 
     def evaluate(self, event: StreamBarEvent) -> None:
         if not event.is_bar:
