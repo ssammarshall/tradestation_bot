@@ -1,4 +1,4 @@
-from time import time
+from datetime import time
 from typing import Optional
 
 from app.schemas.bars import BarHistoryParams, StreamBarEvent
