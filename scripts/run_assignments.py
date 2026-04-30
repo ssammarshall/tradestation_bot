@@ -17,6 +17,7 @@ print(f"Loaded {len(strategy_manager.strategies)} strategy assignment(s).")
 
 try:
     while True:
+        strategy_manager.update()
         time.sleep(1)
 except KeyboardInterrupt:
     print("\nShutting down.")
