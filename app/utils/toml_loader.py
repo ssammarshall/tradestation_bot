@@ -1,6 +1,8 @@
 import tomllib
 from datetime import datetime
 
+from app.market_data.market_data_service import MarketDataService
+from app.orders.order_service import OrderService
 from app.schemas.bars import BarHistoryParams, BarUnit, SessionTemplate
 from app.strategies.strategy import Strategy
 
@@ -9,7 +11,11 @@ def _parse_time(time_str: str) -> datetime.time:
     """Convert 'HH:MM' string to datetime.time object"""
     return datetime.strptime(time_str, "%H:%M").time()
 
-def load_strategy_assignments(path: str) -> list[Strategy]:
+def load_strategy_assignments(
+    path: str,
+    market_data_service: MarketDataService,
+    order_service: OrderService,
+) -> list[Strategy]:
     with open(path, "rb") as f:
         data = tomllib.load(f)
 
@@ -31,6 +37,8 @@ def load_strategy_assignments(path: str) -> list[Strategy]:
                 trade_window_start=_parse_time(item["trade_window_start"]),
                 trade_window_end=_parse_time(item["trade_window_end"]),
                 max_num_of_trades=item["max_num_of_trades"],
+                market_data_service=market_data_service,
+                order_service=order_service,
                 stream=stream,
             )
         )
