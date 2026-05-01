@@ -36,6 +36,7 @@ class Strategy:
         self._is_subscribed: bool = False
 
     def startup(self) -> None:
+        self.setup.symbol = self.symbol
         params = self.setup.history_params(self.symbol)
         if params:
             bars = self.market_data_service.get_bars(params).bars
@@ -51,5 +52,10 @@ class Strategy:
         if not self._setup_confirmed:
             if self.setup.is_valid(event.bar):
                 self._setup_confirmed = True
+            elif self.setup.pending_request is not None:
+                request = self.setup.pending_request
+                self.setup.pending_request = None
+                bars = self.market_data_service.get_bars(request.params).bars
+                self.setup.receive_bars(bars)
         else:
             self.entry.is_valid(event.bar)
