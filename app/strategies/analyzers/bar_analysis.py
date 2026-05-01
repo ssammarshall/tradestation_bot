@@ -17,6 +17,18 @@ def period_high_low(bars: list[Bar]) -> tuple[float, float]:
     return period_high(bars), period_low(bars)
 
 
+def is_bullish_bar(bar: Bar) -> bool:
+    return bar.close_f > bar.open_f
+
+
+def is_impulsive_bar(bar: Bar, threshold: float = 0.6) -> bool:
+    bar_range = bar.high_f - bar.low_f
+    if bar_range <= 0:
+        return False
+    body = abs(bar.close_f - bar.open_f)
+    return body / bar_range >= threshold
+
+
 @dataclass
 class FVG:
     is_bullish = True
@@ -39,3 +51,17 @@ def detect_fvgs(bars: list[Bar]) -> list[FVG]:
             fvgs.append(FVG(False, prev_low, next_high, bars[i+1].timestamp))
 
     return fvgs
+
+
+def detect_ifvg(fvg: FVG, bar: Bar) -> bool:
+    if fvg.is_bullish:
+        return (
+            not is_bullish_bar(bar)
+            and fvg.top < bar.open_f
+            and fvg.bottom > bar.close_f
+        )
+    return (
+        is_bullish_bar(bar)
+        and fvg.bottom > bar.open_f
+        and fvg.top < bar.close_f
+    )
