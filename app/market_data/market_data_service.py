@@ -12,7 +12,7 @@ class MarketDataService:
 
     def get_bars(self, params: BarHistoryParams) -> BarsResponse:
         response = self.client.get(
-            f"/marketdata/barcharts/{params.symbol}",
+            f"/marketdata/barcharts/@{params.symbol}",
             params=params.to_query_params(),
             timeout=30,
         )
