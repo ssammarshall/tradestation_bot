@@ -8,7 +8,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "command",
         choices=commands,
-        help="Command to execute: auth or run",
+        help="Command to execute: account, auth or run",
     )
     return parser
 
