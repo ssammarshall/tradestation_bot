@@ -29,6 +29,12 @@ class Strategy:
         self._setup_confirmed: bool = False
         self._is_subscribed: bool = False
 
+    def startup(self) -> None:
+        self._is_subscribed = True
+
+    def shutdown(self) -> None:
+        self._is_subscribed = False
+
     def evaluate(self, event: StreamBarEvent) -> None:
         if not event.is_bar:
             return
