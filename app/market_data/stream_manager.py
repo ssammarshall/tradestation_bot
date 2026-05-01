@@ -4,15 +4,15 @@ import threading
 from collections import defaultdict
 from typing import Callable
 
-from app.market_data.stream_service import StreamService
+from app.market_data.market_data_service import MarketDataService
 from app.schemas.bars import BarHistoryParams, StreamBarEvent
 
 _StreamKey = tuple  # (symbol, unit, interval, session_template)
 
 
 class StreamManager:
-    def __init__(self, stream_service: StreamService):
-        self._service = stream_service
+    def __init__(self, market_data_service: MarketDataService):
+        self._service = market_data_service
         self._callbacks: dict[_StreamKey, list[Callable[[StreamBarEvent], None]]] = defaultdict(list)
         self._threads: dict[_StreamKey, threading.Thread] = {}
         self._stop_events: dict[_StreamKey, threading.Event] = {}
