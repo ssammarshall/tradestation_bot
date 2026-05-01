@@ -1,11 +1,12 @@
 from abc import ABC, abstractmethod
 
-from app.schemas.bars import Bar, BarHistoryParams
+from app.schemas.bars import Bar, BarHistoryParams, BarHistoryRequest
 
 
 class BaseSetup(ABC):
     def __init__(self) -> None:
-        pass
+        self.symbol: str | None = None
+        self.pending_request: BarHistoryRequest | None = None
 
     @abstractmethod
     def history_params(self, symbol: str) -> BarHistoryParams: ...
@@ -15,3 +16,6 @@ class BaseSetup(ABC):
 
     @abstractmethod
     def is_valid(self, bar: Bar) -> bool: ...
+
+    def receive_bars(self, bars: list[Bar]) -> None:
+        pass
