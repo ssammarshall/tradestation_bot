@@ -25,4 +25,4 @@ def main():
         runpy.run_path("scripts/run_auth.py")
     elif args.command == "run":
         print("Running the bot...\n")
-        runpy.run_path("scripts/run_stream.py")
+        runpy.run_path("scripts/run_assignments.py")
