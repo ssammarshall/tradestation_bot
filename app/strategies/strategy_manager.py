@@ -29,12 +29,12 @@ class StrategyManager:
     def subscribe_strategy(self, strategy: Strategy) -> None:
         if not strategy._is_subscribed and strategy.stream:
             self._stream_manager.subscribe(strategy.stream, self._callbacks[strategy])
-            strategy._is_subscribed = True
+            strategy.startup()
 
     def unsubscribe_strategy(self, strategy: Strategy) -> None:
         if strategy._is_subscribed and strategy.stream:
             self._stream_manager.unsubscribe(strategy.stream, self._callbacks[strategy])
-            strategy._is_subscribed = False
+            strategy.shutdown()
 
     def update(self) -> None:
         current_time = datetime.now().time()
@@ -52,4 +52,7 @@ class StrategyManager:
         return list(self._strategies)
 
     def shutdown(self) -> None:
+        for strategy in self._strategies:
+            if strategy._is_subscribed:
+                self.unsubscribe_strategy(strategy)
         self._stream_manager.shutdown()
