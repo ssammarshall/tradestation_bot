@@ -8,5 +8,7 @@ class BaseSetup(ABC):
         pass
 
     @abstractmethod
+    def startup(self, bars: list[Bar]) -> None: ...
+
+    @abstractmethod
     def is_valid(self, bar: Bar) -> bool: ...
-    
