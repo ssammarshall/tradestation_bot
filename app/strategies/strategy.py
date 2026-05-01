@@ -38,7 +38,7 @@ class Strategy:
     def startup(self) -> None:
         params = self.setup.history_params(self.symbol)
         if params:
-            bars = self.market_data_service.get_bars(params)
+            bars = self.market_data_service.get_bars(params).bars
             self.setup.startup(bars)
         self._is_subscribed = True
 
