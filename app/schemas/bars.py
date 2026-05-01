@@ -70,6 +70,12 @@ class BarHistoryParams:
         return params
 
 
+@dataclass
+class BarHistoryRequest:
+    """Setup-to-strategy signal asking for a bar history fetch."""
+    params: BarHistoryParams
+
+
 # ---------------------------------------------------------------------------
 # Bar data object
 # ---------------------------------------------------------------------------
