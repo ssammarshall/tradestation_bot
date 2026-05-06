@@ -13,7 +13,9 @@ def period_low(bars: list[Bar]) -> float:
     return min(bar.low_f for bar in bars)
 
 
-def period_high_low(bars: list[Bar]) -> tuple[float, float]:
+def period_high_low(bars: list[Bar]) -> tuple[float | None, float | None]:
+    if not bars:
+        return None, None
     return period_high(bars), period_low(bars)
 
 
