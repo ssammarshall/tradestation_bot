@@ -19,3 +19,6 @@ class BaseSetup(ABC):
 
     def receive_bars(self, bars: list[Bar]) -> None:
         pass
+
+    def reset(self) -> None:
+        self.pending_request = None
