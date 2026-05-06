@@ -56,6 +56,10 @@ def detect_fvgs(bars: list[Bar]) -> list[FVG]:
 
 
 def detect_ifvg(fvg: FVG, bar: Bar) -> bool:
+    if fvg.timestamp == bar.timestamp:
+        # Bar that formed the FVG cannot be the one to fill it
+        return False
+    
     if fvg.is_bullish:
         return (
             not is_bullish_bar(bar)
