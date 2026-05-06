@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Callable, Optional
 
 from app.market_data.market_data_service import MarketDataService
@@ -50,7 +50,7 @@ class StrategyManager:
             strategy.shutdown()
 
     def update(self) -> None:
-        current_time = datetime.now().time()
+        current_time = datetime.now(timezone.utc).time()
         
         for strategy in self._strategies:
             in_window = strategy.trade_window_start <= current_time < strategy.trade_window_end
