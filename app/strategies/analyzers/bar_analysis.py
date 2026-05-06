@@ -31,7 +31,7 @@ def is_impulsive_bar(bar: Bar, threshold: float = 0.6) -> bool:
 
 @dataclass
 class FVG:
-    is_bullish = True
+    is_bullish: bool
     top: float
     bottom: float
     timestamp: str  # timestamp of the last bar
