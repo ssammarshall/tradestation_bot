@@ -7,7 +7,7 @@ from app.market_data.market_data_service import MarketDataService
 from app.market_data.stream_manager import StreamManager
 from app.orders.order_service import OrderService
 from app.schemas.bars import StreamBarEvent
-from app.strategies.registry import StrategyRegistry, build_default_registry
+from app.strategies.registry import build_default_registry
 from app.strategies.strategy import Strategy
 from app.utils.toml_loader import load_strategy_assignments
 
@@ -17,12 +17,11 @@ class StrategyManager:
         self,
         market_data_service: MarketDataService,
         order_service: OrderService,
-        registry: Optional[StrategyRegistry] = None,
     ):
         self._market_data = market_data_service
         self._stream_manager = StreamManager(market_data_service)
         self._order_service = order_service
-        self._registry = registry if registry is not None else build_default_registry()
+        self._registry = build_default_registry()
         self._strategies: list[Strategy] = []
         self._callbacks: dict[Strategy, Callable[[StreamBarEvent], None]] = {}
 
