@@ -4,7 +4,12 @@ from app.broker.tradestation_client import TradeStationClient
 from app.market_data.market_data_service import MarketDataService
 from app.orders.order_service import OrderService
 from app.strategies.strategy_manager import StrategyManager
+from app.utils.logging import configure
+from app.utils.toml_loader import load_logging_config
 from config.settings import Settings
+
+level, overrides = load_logging_config("logging.toml")
+configure(level=level, overrides=overrides)
 
 settings = Settings()
 client = TradeStationClient(settings)

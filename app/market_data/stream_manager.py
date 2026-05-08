@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import threading
 from collections import defaultdict
+from logging import Logger, getLogger
 from typing import Callable
 
 from app.market_data.market_data_service import MarketDataService
@@ -18,6 +19,7 @@ class StreamManager:
         self._stop_events: dict[_StreamKey, threading.Event] = {}
         self._params: dict[_StreamKey, BarHistoryParams] = {}
         self._lock = threading.Lock()
+        self.log: Logger = getLogger(self.__class__.__name__)
 
     @staticmethod
     def _key(params: BarHistoryParams) -> _StreamKey:
@@ -34,6 +36,7 @@ class StreamManager:
                 thread = threading.Thread(target=self._run_stream, args=(key, stop), daemon=True)
                 self._threads[key] = thread
                 thread.start()
+                self.log.info("subscribe %s", key)
 
     def unsubscribe(self, params: BarHistoryParams, callback: Callable[[StreamBarEvent], None]) -> None:
         key = self._key(params)
@@ -41,10 +44,10 @@ class StreamManager:
             callbacks = self._callbacks.get(key, [])
             if callback in callbacks:
                 callbacks.remove(callback)
-            
-            if not callbacks:
-                if key in self._stop_events:
-                    self._stop_events[key].set()
+
+            if not callbacks and key in self._stop_events:
+                self.log.info("unsubscribe %s (last)", key)
+                self._stop_events[key].set()
 
     def shutdown(self) -> None:
         with self._lock:
@@ -54,6 +57,8 @@ class StreamManager:
 
     def _run_stream(self, key: _StreamKey, stop: threading.Event) -> None:
         params = self._params[key]
+        log = self.log.getChild(f"{key[0]}.{key[1].value}.{key[2]}")
+        log.debug("stream open")
         try:
             for event in self._service.stream_bars(params):
                 if stop.is_set():
@@ -63,6 +68,7 @@ class StreamManager:
                 for cb in callbacks:
                     cb(event)
         finally:
+            log.debug("stream closed")
             with self._lock:
                 self._threads.pop(key, None)
                 self._stop_events.pop(key, None)

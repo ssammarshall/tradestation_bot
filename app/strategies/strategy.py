@@ -1,5 +1,5 @@
 from datetime import time
-from typing import Optional
+from logging import Logger, getLogger
 
 from app.market_data.market_data_service import MarketDataService
 from app.orders.order_service import OrderService
@@ -35,6 +35,7 @@ class Strategy:
         self._current_num_of_trades = 0
         self._setup_confirmed: bool = False
         self._is_subscribed: bool = False
+        self.log: Logger = getLogger(f"{self.name}")
 
     def startup(self) -> None:
         self.setup.symbol = self.symbol
@@ -89,7 +90,7 @@ class Strategy:
 
             # TODO: execute trade via order service
 
-            print(f"Valid entry detected for strategy {self.name} at {bar.timestamp}. Total trades taken today: {self._current_num_of_trades}")
+            self.log.info("entry at %s (trades today=%d)", bar.timestamp, self._current_num_of_trades)
             if self._current_num_of_trades >= self.max_num_of_trades:
-                print(f"Reached max number of trades for strategy {self.name}. No further trades will be taken today.")
+                self.log.info("max trades reached, shutting down")
                 self.shutdown()

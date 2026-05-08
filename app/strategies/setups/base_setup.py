@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from logging import Logger, getLogger
 
 from app.schemas.bars import Bar, BarHistoryParams, BarHistoryRequest
 
@@ -7,6 +8,7 @@ class BaseSetup(ABC):
     def __init__(self) -> None:
         self.symbol: str | None = None
         self.pending_request: BarHistoryRequest | None = None
+        self.log: Logger = getLogger(self.__class__.__name__)
 
     @abstractmethod
     def history_params(self, symbol: str) -> BarHistoryParams: ...

@@ -45,6 +45,12 @@ def load_strategy_assignments(
 
     return assignments
 
+def load_logging_config(path: str) -> tuple[str | int, dict[str, str | int]]:
+    with open(path, "rb") as f:
+        data = tomllib.load(f)
+    return data.get("level", "INFO"), data.get("overrides", {})
+
+
 def load_stream_params(path: str) -> list[BarHistoryParams]:
     with open(path, "rb") as f:
         data = tomllib.load(f)
