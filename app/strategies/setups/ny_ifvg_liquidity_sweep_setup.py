@@ -1,10 +1,220 @@
-from app.schemas.bars import Bar
+from datetime import datetime, time, timedelta, timezone
+from enum import Enum
+from typing import assert_never
+
+from app.schemas.bars import Bar, BarHistoryParams, BarHistoryRequest, BarUnit
+from app.strategies.analyzers.bar_analysis import is_impulsive_bar, period_high_low, detect_fvgs, detect_ifvg
 from app.strategies.setups.base_setup import BaseSetup
+
+
+class Phase(str, Enum):
+    SCANNING = "scanning"               # Waiting for a sweep of any level
+    DETECTING_IFVG = "detecting_ifvg"   # Bars received, IFVG detection
+    CONFIRMED = "confirmed"             # Setup confirmed, waiting for entry trigger
+
 
 class NYIFVGLiquiditySweepSetup(BaseSetup):
     def __init__(self) -> None:
         super().__init__()
 
+        # (high, low) for the previous day, Asia session, and London session.
+        # A side is set to None once it has been swept by a later session.
+        self.previous_day: tuple[float | None, float | None] = (None, None)
+        self.asia: tuple[float | None, float | None] = (None, None)
+        self.london: tuple[float | None, float | None] = (None, None)
+        self.current_session: tuple[float | None, float | None] = (None, None)
+
+        self.entered_liquidity_timestamp: datetime | None = None
+        self.is_bullish_sweep: bool | None = None
+        self.grace_period_start: datetime | None = None
+        self.grace_period: timedelta = timedelta(minutes=10)
+        self.bars_since_sweep: list[Bar] | None = None
+        self.phase: Phase = Phase.SCANNING
+
+    def history_params(self, symbol: str) -> BarHistoryParams:
+        now = datetime.now(timezone.utc)
+        start = datetime.combine(
+            now.date() - timedelta(days=1), time(0, 0), tzinfo=timezone.utc
+        )
+        minutes_back = int((now - start).total_seconds() // 60) + 1
+        return BarHistoryParams(
+            symbol=symbol,
+            unit=BarUnit.MINUTE,
+            interval=1,
+            barsback=minutes_back
+        )
+
+    def startup(self, bars: list[Bar]) -> None:
+        if not bars:
+            return
+        self.log.info("history returned %d bars, first=%s, last=%s", len(bars), bars[0].timestamp, bars[-1].timestamp)
+        last_ts = datetime.fromisoformat(bars[-1].timestamp).astimezone(timezone.utc)
+        today = last_ts.date()
+        prev_day = today - timedelta(days=1)
+
+        prev_day_bars: list[Bar] = []
+        asia_bars: list[Bar] = []
+        london_bars: list[Bar] = []
+
+        for bar in bars:
+            ts = datetime.fromisoformat(bar.timestamp).astimezone(timezone.utc)
+            if ts.date() == prev_day:
+                prev_day_bars.append(bar)
+            elif ts.date() == today:
+                if time(0, 0) <= ts.time() < time(9, 0):
+                    asia_bars.append(bar)
+                elif time(8, 0) <= ts.time() < time(13, 0):
+                    london_bars.append(bar)
+
+        if prev_day_bars:
+            self.log.debug("received %d previous day bars", len(prev_day_bars))
+            self.previous_day = period_high_low(prev_day_bars)
+        if asia_bars:
+            self.log.debug("received %d Asia session bars", len(asia_bars))
+            self.asia = period_high_low(asia_bars)
+        if london_bars:
+            self.log.debug("received %d London session bars", len(london_bars))
+            self.london = period_high_low(london_bars)
+
+        self._discard_swept_levels()
+
+        self.log.info("previous day high/low: %s", self.previous_day)
+        self.log.info("asia session high/low: %s", self.asia)
+        self.log.info("london session high/low: %s", self.london)
+
     def is_valid(self, bar: Bar) -> bool:
-        # Implement the validation logic for the NYIFVGLiquiditySweepSetup
-        pass
+        # Snapshot before updating so sweep checks compare the bar's close
+        # against the session high/low up to (but not including) this bar.
+        prev_session = self.current_session
+        self._update_current_session(bar)
+
+        match self.phase:
+            case Phase.SCANNING:
+                self.log.debug("scanning - bar=%s O:%s H:%s L:%s C:%s", bar.timestamp, bar.open_f, bar.high_f, bar.low_f, bar.close_f)
+                return self._scan(bar, prev_session)
+            case Phase.DETECTING_IFVG:
+                self.log.debug("detecting ifvg - bar=%s O:%s H:%s L:%s C:%s", bar.timestamp, bar.open_f, bar.high_f, bar.low_f, bar.close_f)
+                return self._detect(bar)
+            case _:
+                assert_never(self.phase)
+
+    def receive_bars(self, bars: list[Bar]) -> None:
+        self.bars_since_sweep = bars
+
+    def reset(self) -> None:
+        super().reset()
+        self.phase = Phase.SCANNING
+        self.entered_liquidity_timestamp = None
+        self.is_bullish_sweep = None
+        self.grace_period_start = None
+        self.bars_since_sweep = None
+
+    # In SCANNING, we wait for a sweep of any level. Once we see a sweep, we request bars for IFVG detection.
+    def _scan(self, bar: Bar, prev_session: tuple[float | None, float | None]) -> bool:
+        bar_time = datetime.fromisoformat(bar.timestamp).astimezone(timezone.utc)
+        sessions = (self.previous_day, self.asia, self.london, prev_session)
+        swept_high, swept_low = self._check_sweeps(sessions, bar.close_f)
+
+        # Check if the bar sweeps any of the key levels
+        if swept_high or swept_low:
+            self.grace_period_start = None
+            if swept_high: self.log.debug("swept high")
+            if swept_low: self.log.debug("swept low")
+            # If we've entered liquidity, record the sweep and it's direction
+            if self.entered_liquidity_timestamp is None:
+                self.log.info("entered liquidity, recording sweep")
+                self.entered_liquidity_timestamp = bar_time
+                self.is_bullish_sweep = swept_high
+        elif self.entered_liquidity_timestamp is not None:
+            # If we've exited liquidity, check the grace period
+            if self.grace_period_start is None:
+                # Start the grace period timer and continue
+                self.log.debug("start grace period")
+                self.grace_period_start = bar_time
+            else:
+                # If grace period has expired, reset everything and return False
+                if bar_time - self.grace_period_start >= self.grace_period:
+                    self.log.info("grace period expired, resetting")
+                    self.reset()
+                    return False
+        else:
+            # If we aren't in liquidity and have no grace period, discard swept levels and return
+            self._discard_swept_levels()
+            self.log.debug("no sweep detected, discard swept levels and return")
+            return False
+
+        # Inverse fair value gaps must be formed by impulsive bars
+        if not is_impulsive_bar(bar):
+            self.log.debug("bar is not impulsive, return")
+            return False
+
+        # The impulsive bar must be in the opposite direction of the sweep
+        is_bullish_bar = bar.close_f > bar.open_f
+        if is_bullish_bar == self.is_bullish_sweep:
+            self.log.debug("bar is in the same direction of the sweep, return")
+            return False
+
+        # Request bars from the sweep entry through the current bar for IFVG detection
+        minutes_back = int(
+            (bar_time - self.entered_liquidity_timestamp).total_seconds() // 60
+        ) + 1
+        if minutes_back < 3:
+            self.log.debug("not enough bars since sweep entry for ifvg detection (minutes_back=%d)", minutes_back)
+            return False
+        self._emit_history_request(minutes_back)
+        self.phase = Phase.DETECTING_IFVG
+        return False
+
+    # In DETECTING_IFVG, we scan bars_since_sweep for the IFVG pattern
+    def _detect(self, bar: Bar) -> bool:
+        assert self.bars_since_sweep is not None
+        fvgs = detect_fvgs(self.bars_since_sweep)
+        for fvg in fvgs:
+            if fvg.is_bullish != self.is_bullish_sweep:
+                continue
+            if detect_ifvg(fvg, bar):
+                self.log.info("confirmed ifvg at %s, fvg inverted: %s", bar.timestamp, fvg.timestamp)
+                self.phase = Phase.CONFIRMED
+                return True
+        self.log.debug("no ifvg detected, resetting")
+        self.reset()
+        return False
+
+    def _emit_history_request(self, minutes_back: int) -> None:
+        self.log.debug("emitting history request for %d minutes of bars since sweep entry", minutes_back)
+        self.pending_request = BarHistoryRequest(
+            params=BarHistoryParams(
+                symbol=self.symbol,
+                unit=BarUnit.MINUTE,
+                interval=1,
+                barsback=minutes_back,
+            )
+        )
+
+    def _check_sweeps(
+        self,
+        sessions: tuple[tuple[float | None, float | None], ...],
+        close: float,
+    ) -> tuple[bool, bool]:
+        swept_high = any(h is not None and close > h for h, _ in sessions)
+        swept_low = any(l is not None and close < l for _, l in sessions)
+        return swept_high, swept_low
+
+    def _discard_swept_levels(self) -> None:
+        # Earlier sessions get their high/low cleared if a later session swept it.
+        sessions = ["previous_day", "asia", "london", "current_session"]
+        for i, earlier in enumerate(sessions):
+            high, low = getattr(self, earlier)
+            for later in sessions[i + 1:]:
+                later_high, later_low = getattr(self, later)
+                if high is not None and later_high is not None and later_high > high:
+                    high = None
+                if low is not None and later_low is not None and later_low < low:
+                    low = None
+            setattr(self, earlier, (high, low))
+
+    def _update_current_session(self, bar: Bar) -> None:
+        cur_high, cur_low = self.current_session
+        new_high = bar.high_f if cur_high is None else max(cur_high, bar.high_f)
+        new_low = bar.low_f if cur_low is None else min(cur_low, bar.low_f)
+        self.current_session = (new_high, new_low)
