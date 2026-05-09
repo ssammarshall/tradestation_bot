@@ -158,6 +158,14 @@ python main.py run
 
 Stop with `Ctrl+C` — the bot will unsubscribe streams and close the HTTP client cleanly.
 
+### Backtest
+
+Replays each assignment in `strategy_assignments.toml` against historical bars fetched from TradeStation, using the same setup/entry evaluation path as live mode. Trade-window and `max_num_of_trades` caps are enforced as in live mode. Per-strategy total trades and entry timestamps are logged under the assignment's `name`. Edit `days_back` in [scripts/run_backtest.py](scripts/run_backtest.py) to change the lookback (default 30).
+
+```bash
+python main.py backtest
+```
+
 ## Useful scripts
 
 In addition to the CLI commands, [scripts/](scripts/) contains standalone utilities:
