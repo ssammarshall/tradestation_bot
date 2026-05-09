@@ -4,15 +4,21 @@ import os
 
 load_dotenv()
 
+def required_env_var(var_name: str) -> str:
+    value = os.getenv(var_name)
+    if value is None:
+        raise ValueError(f"Environment variable '{var_name}' is required but not set.")
+    return value
+
 @dataclass(frozen=True)
 class Settings:
-    client_id: str = field(default_factory=lambda: os.getenv("CLIENT_ID"))
-    client_secret: str = field(default_factory=lambda: os.getenv("CLIENT_SECRET"))
-    refresh_token: str = field(default_factory=lambda: os.getenv("REFRESH_TOKEN"))
+    client_id: str = field(default_factory=lambda: required_env_var("CLIENT_ID"))
+    client_secret: str = field(default_factory=lambda: required_env_var("CLIENT_SECRET"))
+    refresh_token: str = field(default_factory=lambda: required_env_var("REFRESH_TOKEN"))
     redirect_uri: str = field(default_factory=lambda: os.getenv("REDIRECT_URI", "http://localhost:3000"))
     environment: str = field(default_factory=lambda: os.getenv("TS_ENV", "sim"))  # sim or live
-    account_id: str = field(default_factory=lambda: os.getenv("ACCOUNT_ID"))
-    sim_account_id: str = field(default_factory=lambda: os.getenv("SIM_ACCOUNT_ID"))
+    account_id: str = field(default_factory=lambda: required_env_var("ACCOUNT_ID"))
+    sim_account_id: str = field(default_factory=lambda: required_env_var("SIM_ACCOUNT_ID"))
 
 
     @property
