@@ -48,6 +48,7 @@ class Strategy:
     def shutdown(self) -> None:
         self._is_subscribed = False
         self._current_num_of_trades = 0
+        self.reset()
 
     def reset(self) -> None:
         self._setup_confirmed = False
