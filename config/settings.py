@@ -16,7 +16,7 @@ class Settings:
     client_secret: str = field(default_factory=lambda: required_env_var("CLIENT_SECRET"))
     refresh_token: str = field(default_factory=lambda: required_env_var("REFRESH_TOKEN"))
     redirect_uri: str = field(default_factory=lambda: os.getenv("REDIRECT_URI", "http://localhost:3000"))
-    environment: str = field(default_factory=lambda: os.getenv("TS_ENV", "sim")).strip().lower()  # sim or live
+    environment: str = field(default_factory=lambda: os.getenv("TS_ENV", "sim").strip().lower())  # sim or live
     account_id: str = field(default_factory=lambda: required_env_var("ACCOUNT_ID"))
     sim_account_id: str = field(default_factory=lambda: required_env_var("SIM_ACCOUNT_ID"))
 
