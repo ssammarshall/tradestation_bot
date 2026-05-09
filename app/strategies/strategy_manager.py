@@ -40,8 +40,8 @@ class StrategyManager:
 
     def subscribe_strategy(self, strategy: Strategy) -> None:
         if not strategy._is_subscribed and strategy.stream:
-            self._stream_manager.subscribe(strategy.stream, self._callbacks[strategy])
             strategy.startup()
+            self._stream_manager.subscribe(strategy.stream, self._callbacks[strategy])
 
     def unsubscribe_strategy(self, strategy: Strategy) -> None:
         if strategy._is_subscribed and strategy.stream:
