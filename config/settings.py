@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from dotenv import load_dotenv
 import os
 
@@ -6,13 +6,13 @@ load_dotenv()
 
 @dataclass(frozen=True)
 class Settings:
-    client_id: str = os.getenv("CLIENT_ID")
-    client_secret: str = os.getenv("CLIENT_SECRET")
-    refresh_token: str = os.getenv("REFRESH_TOKEN")
-    redirect_uri: str = os.getenv("REDIRECT_URI", "http://localhost:3000")
-    environment: str = os.getenv("TS_ENV", "sim")  # sim or live
-    account_id: str = os.getenv("ACCOUNT_ID")
-    sim_account_id: str = os.getenv("SIM_ACCOUNT_ID")
+    client_id: str = field(default_factory=lambda: os.getenv("CLIENT_ID"))
+    client_secret: str = field(default_factory=lambda: os.getenv("CLIENT_SECRET"))
+    refresh_token: str = field(default_factory=lambda: os.getenv("REFRESH_TOKEN"))
+    redirect_uri: str = field(default_factory=lambda: os.getenv("REDIRECT_URI", "http://localhost:3000"))
+    environment: str = field(default_factory=lambda: os.getenv("TS_ENV", "sim"))  # sim or live
+    account_id: str = field(default_factory=lambda: os.getenv("ACCOUNT_ID"))
+    sim_account_id: str = field(default_factory=lambda: os.getenv("SIM_ACCOUNT_ID"))
 
 
     @property
