@@ -15,8 +15,8 @@ class AuthenticatedSession:
 
         response = self.session.request(method, url, headers=headers, **kwargs)
 
+        # Retry on unauthorized
         if response.status_code == 401:
-            self.token_manager._refresh()
             fresh_token = self.token_manager.get_access_token()
             headers["Authorization"] = f"Bearer {fresh_token}"
             response = self.session.request(method, url, headers=headers, **kwargs)
