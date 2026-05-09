@@ -13,5 +13,4 @@ class RetracementEntry(BaseEntry):
         super().__init__(take_profit, stop_loss, target_price)
 
     def is_valid(self, bar: Bar) -> bool:
-        # Implement the validation logic for the RetracementEntry
-        pass
+        return True  # Placeholder implementation; replace with actual logic
