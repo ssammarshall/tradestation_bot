@@ -1,9 +1,11 @@
 from datetime import datetime, time, timedelta, timezone
+from decimal import Decimal
 from enum import Enum
 from typing import assert_never
 
 from app.schemas.bars import Bar, BarHistoryParams, BarHistoryRequest, BarUnit
-from app.strategies.analyzers.bar_analysis import is_bullish_bar, is_impulsive_bar, period_high_low, detect_fvgs, detect_ifvg
+from app.schemas.signals import EntrySignal
+from app.strategies.analyzers.bar_analysis import FVG, is_bullish_bar, is_impulsive_bar, period_high_low, detect_fvgs, detect_ifvg
 from app.strategies.setups.base_setup import BaseSetup
 
 
@@ -172,12 +174,56 @@ class NYIFVGLiquiditySweepSetup(BaseSetup):
             if fvg.is_bullish != self.is_bullish_sweep:
                 continue
             if detect_ifvg(fvg, bar):
-                self.log.info("confirmed ifvg at %s, fvg inverted: %s", bar.timestamp, fvg.timestamp)
+                self.log.info("confirmed ifvg at %s, fvg inverted: %s", bar.timestamp, fvg.bar_3.timestamp)
+                signal = self._build_signal(fvg, bar)
+                if signal is None:
+                    self.log.warning("no take_profit session level available, discarding ifvg")
+                    self.reset()
+                    return False
+                self.log.debug("emitting entry signal: target_price=%s, stop_loss=%s, take_profit=%s", signal.target_price, signal.stop_loss, signal.take_profit)
+                self.pending_signal = signal
                 self.phase = Phase.CONFIRMED
                 return True
         self.log.debug("no ifvg detected, resetting")
         self.reset()
         return False
+
+    def _build_signal(self, fvg: FVG, bar: Bar) -> EntrySignal | None:
+        target_price = Decimal(fvg.bar_2.open)
+        resistance_level: Decimal | None = None
+        support_level: Decimal | None = None
+        if fvg.is_bullish:
+            resistance_level = Decimal(bar.open)
+            stop_loss = Decimal(fvg.bar_3.high)
+        else:
+            support_level = Decimal(bar.open)
+            stop_loss = Decimal(fvg.bar_3.low)
+
+        take_profit = self._next_closest_session_level(bar)
+        if take_profit is None:
+            return None
+
+        return EntrySignal(
+            is_bullish=not self.is_bullish_sweep,
+            target_price=target_price,
+            stop_loss=stop_loss,
+            take_profit=take_profit,
+            resistance_level=resistance_level,
+            support_level=support_level,
+        )
+
+    def _next_closest_session_level(self, bar: Bar) -> Decimal | None:
+        current_price = bar.open_f
+        sessions = (self.previous_day, self.asia, self.london, self.current_session)
+        if self.is_bullish_sweep:
+            lows = [low for _, low in sessions if low is not None and low < current_price]
+            if not lows:
+                return None
+            return Decimal(str(max(lows)))
+        highs = [high for high, _ in sessions if high is not None and high > current_price]
+        if not highs:
+            return None
+        return Decimal(str(min(highs)))
 
     def _emit_history_request(self, minutes_back: int) -> None:
         self.log.debug("emitting history request for %d minutes of bars since sweep entry", minutes_back)
