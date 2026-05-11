@@ -38,7 +38,7 @@ class Strategy:
         self.log: Logger = getLogger(f"{self.name}")
 
     def startup(self) -> None:
-        params = self.setup.history_params(self.symbol)
+        params = self.setup.history_params()
         if params:
             bars = self.market_data_service.get_bars(params).bars
             self.setup.startup(bars)
@@ -63,34 +63,47 @@ class Strategy:
             return
 
         # Setup
+        just_confirmed = False
         while True:
             if self._setup_confirmed:
                 break
-            
+
             is_valid_setup = self.setup.is_valid(bar)
             if is_valid_setup:
                 self._setup_confirmed = True
+                just_confirmed = True
+                signal = self.setup.consume_signal()
+                if signal is not None:
+                    self.entry.apply_signal(signal)
+                    break
+                self.log.debug("setup confirmed at %s, but no entry signal emitted", bar.timestamp)
                 break
-            
-            if self.setup.pending_request is None:
+
+            request = self.setup.consume_request()
+            if request is None:
                 break
-            request = self.setup.pending_request
-            self.setup.pending_request = None
             bars = self.market_data_service.get_bars(request.params).bars
             self.setup.receive_bars(bars)
 
 
         if not self._setup_confirmed:
             return
-        
+
+        # The entry must not see the same bar that confirmed the setup.
+        if just_confirmed:
+            just_confirmed = False
+            return
+
         # Entry
         valid_entry = self.entry.is_valid(bar)
         if valid_entry:
             self._current_num_of_trades += 1
 
-            # TODO: execute trade via order service
+            # TODO: execute trade via order service (use signal stop_loss/take_profit)
 
             self.log.info("entry at %s (trades today=%d)", bar.timestamp, self._current_num_of_trades)
             if self._current_num_of_trades >= self.max_num_of_trades:
                 self.log.info("max trades reached, shutting down")
                 self.shutdown()
+            else:
+                self.reset()
