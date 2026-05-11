@@ -24,6 +24,16 @@ class BaseSetup(ABC):
     def receive_bars(self, bars: list[Bar]) -> None:
         pass
 
+    def consume_request(self) -> BarHistoryRequest | None:
+        request = self.pending_request
+        self.pending_request = None
+        return request
+
+    def consume_signal(self) -> EntrySignal | None:
+        signal = self.pending_signal
+        self.pending_signal = None
+        return signal
+
     def reset(self) -> None:
         self.pending_request = None
         self.pending_signal = None
