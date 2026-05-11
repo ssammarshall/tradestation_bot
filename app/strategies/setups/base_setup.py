@@ -2,12 +2,14 @@ from abc import ABC, abstractmethod
 from logging import Logger, getLogger
 
 from app.schemas.bars import Bar, BarHistoryParams, BarHistoryRequest
+from app.schemas.signals import EntrySignal
 
 
 class BaseSetup(ABC):
     def __init__(self, symbol: str) -> None:
         self.symbol: str = symbol
         self.pending_request: BarHistoryRequest | None = None
+        self.pending_signal: EntrySignal | None = None
         self.log: Logger = getLogger(self.__class__.__name__)
 
     @abstractmethod
@@ -24,3 +26,4 @@ class BaseSetup(ABC):
 
     def reset(self) -> None:
         self.pending_request = None
+        self.pending_signal = None
