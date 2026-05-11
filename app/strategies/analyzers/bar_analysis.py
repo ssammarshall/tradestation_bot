@@ -34,40 +34,39 @@ def is_impulsive_bar(bar: Bar, threshold: float = 0.6) -> bool:
 @dataclass
 class FVG:
     is_bullish: bool
-    top: float
-    bottom: float
-    timestamp: str  # timestamp of the last bar
+    bar_1: Bar
+    bar_2: Bar
+    bar_3: Bar
 
 
 def detect_fvgs(bars: list[Bar]) -> list[FVG]:
     fvgs: list[FVG] = []
     for i in range(1, len(bars) - 1):
-        prev_high = bars[i - 1].high_f
-        prev_low = bars[i - 1].low_f
-        next_high = bars[i + 1].high_f
-        next_low = bars[i + 1].low_f
+        prev_bar = bars[i - 1]
+        mid_bar = bars[i]
+        next_bar = bars[i + 1]
 
-        if next_low > prev_high:
-            fvgs.append(FVG(True, next_low, prev_high, bars[i+1].timestamp))
-        elif next_high < prev_low:
-            fvgs.append(FVG(False, prev_low, next_high, bars[i+1].timestamp))
+        if next_bar.low_f > prev_bar.high_f:
+            fvgs.append(FVG(True, prev_bar, mid_bar, next_bar))
+        elif next_bar.high_f < prev_bar.low_f:
+            fvgs.append(FVG(False, prev_bar, mid_bar, next_bar))
 
     return fvgs
 
 
 def detect_ifvg(fvg: FVG, bar: Bar) -> bool:
-    if fvg.timestamp == bar.timestamp:
-        # Bar that formed the FVG cannot be the one to fill it
+    if bar.timestamp in (fvg.bar_1.timestamp, fvg.bar_2.timestamp, fvg.bar_3.timestamp):
+        # Bars that formed the FVG cannot be the one to invert it
         return False
-    
+
     if fvg.is_bullish:
         return (
             not is_bullish_bar(bar)
-            and fvg.top < bar.open_f
-            and fvg.bottom > bar.close_f
+            and fvg.bar_3.low_f < bar.open_f
+            and fvg.bar_1.high_f > bar.close_f
         )
     return (
         is_bullish_bar(bar)
-        and fvg.bottom > bar.open_f
-        and fvg.top < bar.close_f
+        and fvg.bar_3.high_f > bar.open_f
+        and fvg.bar_1.low_f < bar.close_f
     )
