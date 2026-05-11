@@ -10,8 +10,6 @@ class RetracementEntry(BaseEntry):
         resistance_level: Decimal | None = None,
         support_level: Decimal | None = None,
     ) -> None:
-        if self.target_price is None:
-            raise ValueError("target_price must be provided for RetracementEntry")
         super().__init__(target_price, resistance_level, support_level)
 
     def is_valid(self, bar: Bar) -> bool:
