@@ -3,7 +3,7 @@ from enum import Enum
 from typing import assert_never
 
 from app.schemas.bars import Bar, BarHistoryParams, BarHistoryRequest, BarUnit
-from app.strategies.analyzers.bar_analysis import is_impulsive_bar, period_high_low, detect_fvgs, detect_ifvg
+from app.strategies.analyzers.bar_analysis import is_bullish_bar, is_impulsive_bar, period_high_low, detect_fvgs, detect_ifvg
 from app.strategies.setups.base_setup import BaseSetup
 
 
@@ -149,8 +149,7 @@ class NYIFVGLiquiditySweepSetup(BaseSetup):
             return False
 
         # The impulsive bar must be in the opposite direction of the sweep
-        is_bullish_bar = bar.close_f > bar.open_f
-        if is_bullish_bar == self.is_bullish_sweep:
+        if is_bullish_bar(bar) == self.is_bullish_sweep:
             self.log.debug("bar is in the same direction of the sweep, return")
             return False
 
