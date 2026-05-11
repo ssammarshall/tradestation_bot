@@ -31,14 +31,14 @@ class NYIFVGLiquiditySweepSetup(BaseSetup):
         self.bars_since_sweep: list[Bar] | None = None
         self.phase: Phase = Phase.SCANNING
 
-    def history_params(self, symbol: str) -> BarHistoryParams:
+    def history_params(self) -> BarHistoryParams:
         now = datetime.now(timezone.utc)
         start = datetime.combine(
             now.date() - timedelta(days=1), time(0, 0), tzinfo=timezone.utc
         )
         minutes_back = int((now - start).total_seconds() // 60) + 1
         return BarHistoryParams(
-            symbol=symbol,
+            symbol=self.symbol,
             unit=BarUnit.MINUTE,
             interval=1,
             barsback=minutes_back
