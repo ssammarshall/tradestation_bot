@@ -3,6 +3,7 @@ from decimal import Decimal
 from logging import Logger, getLogger
 
 from app.schemas.bars import Bar
+from app.schemas.signals import EntrySignal
 
 
 class BaseEntry(ABC):
@@ -21,3 +22,13 @@ class BaseEntry(ABC):
 
     @abstractmethod
     def is_valid(self, bar: Bar) -> bool: ...
+
+    def apply_signal(self, signal: EntrySignal) -> None:
+        self.target_price = signal.target_price
+        self.resistance_level = signal.resistance_level
+        self.support_level = signal.support_level
+
+    def clear_signal(self) -> None:
+        self.target_price = None
+        self.resistance_level = None
+        self.support_level = None
