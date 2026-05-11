@@ -8,13 +8,13 @@ from app.schemas.bars import Bar
 class BaseEntry(ABC):
     def __init__(
         self,
-        take_profit: Decimal = Decimal(0),
-        stop_loss: Decimal = Decimal(0),
         target_price: Decimal | None = None,
+        resistance_level: Decimal | None = None,
+        support_level: Decimal | None = None,
     ) -> None:
-        self.take_profit = take_profit
-        self.stop_loss = stop_loss
         self.target_price = target_price
+        self.resistance_level = resistance_level
+        self.support_level = support_level
         self.log: Logger = getLogger(self.__class__.__name__)
 
     @abstractmethod
