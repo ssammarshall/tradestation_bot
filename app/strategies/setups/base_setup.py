@@ -5,8 +5,8 @@ from app.schemas.bars import Bar, BarHistoryParams, BarHistoryRequest
 
 
 class BaseSetup(ABC):
-    def __init__(self) -> None:
-        self.symbol: str | None = None
+    def __init__(self, symbol: str) -> None:
+        self.symbol: str = symbol
         self.pending_request: BarHistoryRequest | None = None
         self.log: Logger = getLogger(self.__class__.__name__)
 

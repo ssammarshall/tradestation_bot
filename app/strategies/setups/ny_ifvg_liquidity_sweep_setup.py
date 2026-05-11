@@ -14,8 +14,8 @@ class Phase(str, Enum):
 
 
 class NYIFVGLiquiditySweepSetup(BaseSetup):
-    def __init__(self) -> None:
-        super().__init__()
+    def __init__(self, symbol: str) -> None:
+        super().__init__(symbol)
 
         # (high, low) for the previous day, Asia session, and London session.
         # A side is set to None once it has been swept by a later session.

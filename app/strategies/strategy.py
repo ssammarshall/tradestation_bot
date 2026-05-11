@@ -38,7 +38,6 @@ class Strategy:
         self.log: Logger = getLogger(f"{self.name}")
 
     def startup(self) -> None:
-        self.setup.symbol = self.symbol
         params = self.setup.history_params(self.symbol)
         if params:
             bars = self.market_data_service.get_bars(params).bars

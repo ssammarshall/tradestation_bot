@@ -50,8 +50,8 @@ class Backtester:
             market_data_service=self._market_data,
             order_service=self._order_service,
         ):
-            strategy.setup = self._registry.get_setup(strategy.setup)()
-            strategy.entry = self._registry.get_entry(strategy.entry)()
+            strategy.setup = self._registry.get_setup(strategy.setup)(symbol=strategy.symbol)
+            strategy.entry = self._registry.get_entry(strategy.entry)(symbol=strategy.symbol)
             self._strategies.append(strategy)
             self._trades[strategy] = []
 
