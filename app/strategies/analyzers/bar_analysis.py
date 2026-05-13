@@ -37,6 +37,7 @@ class FVG:
     bar_1: Bar
     bar_2: Bar
     bar_3: Bar
+    range_f: float
 
 
 def detect_fvgs(bars: list[Bar]) -> list[FVG]:
@@ -47,9 +48,9 @@ def detect_fvgs(bars: list[Bar]) -> list[FVG]:
         next_bar = bars[i + 1]
 
         if next_bar.low_f > prev_bar.high_f:
-            fvgs.append(FVG(True, prev_bar, mid_bar, next_bar))
+            fvgs.append(FVG(True, prev_bar, mid_bar, next_bar, next_bar.low_f - prev_bar.high_f))
         elif next_bar.high_f < prev_bar.low_f:
-            fvgs.append(FVG(False, prev_bar, mid_bar, next_bar))
+            fvgs.append(FVG(False, prev_bar, mid_bar, next_bar, prev_bar.low_f - next_bar.high_f))
 
     return fvgs
 
