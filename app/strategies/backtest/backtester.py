@@ -10,6 +10,7 @@ from app.orders.order_service import OrderService
 from app.schemas.bars import StreamBarEvent
 from app.strategies.registry import build_default_registry
 from app.strategies.strategy import Strategy
+from app.utils.logging import bar_clock
 from app.utils.toml_loader import load_strategy_assignments
 
 
@@ -79,6 +80,7 @@ class Backtester:
 
         for bar in bars:
             self._market_data.cursor_epoch = bar.epoch
+            bar_clock.set(bar.timestamp)
             bar_time = datetime.fromisoformat(bar.timestamp).time()
             in_window = ws <= bar_time < we
 

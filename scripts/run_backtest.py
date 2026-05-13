@@ -7,7 +7,7 @@ from app.utils.toml_loader import load_logging_config
 from config.settings import Settings
 
 level, overrides = load_logging_config("logging.toml")
-configure(level=level, overrides=overrides)
+configure(level=level, overrides=overrides, backtest=True)
 
 settings = Settings()
 client = TradeStationClient(settings)
