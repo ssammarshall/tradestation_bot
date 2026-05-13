@@ -49,7 +49,7 @@ class NYIFVGLiquiditySweepSetup(BaseSetup):
     def startup(self, bars: list[Bar]) -> None:
         if not bars:
             return
-        self.log.info("history returned %d bars, first=%s, last=%s", len(bars), bars[0].timestamp, bars[-1].timestamp)
+        self.log.debug("history returned %d bars, first=%s, last=%s", len(bars), bars[0].timestamp, bars[-1].timestamp)
         last_ts = datetime.fromisoformat(bars[-1].timestamp).astimezone(timezone.utc)
         today = last_ts.date()
         prev_day = today - timedelta(days=1)
@@ -80,9 +80,9 @@ class NYIFVGLiquiditySweepSetup(BaseSetup):
 
         self._discard_swept_levels()
 
-        self.log.info("previous day high/low: %s", self.previous_day)
-        self.log.info("asia session high/low: %s", self.asia)
-        self.log.info("london session high/low: %s", self.london)
+        self.log.debug("previous day high/low: %s", self.previous_day)
+        self.log.debug("asia session high/low: %s", self.asia)
+        self.log.debug("london session high/low: %s", self.london)
 
     def is_valid(self, bar: Bar) -> bool:
         # Snapshot before updating so sweep checks compare the bar's close
@@ -124,7 +124,7 @@ class NYIFVGLiquiditySweepSetup(BaseSetup):
             if swept_low: self.log.debug("swept low")
             # If we've entered liquidity, record the sweep and it's direction
             if self.entered_liquidity_timestamp is None:
-                self.log.info("entered liquidity, recording sweep")
+                self.log.debug("entered liquidity, recording sweep")
                 self.entered_liquidity_timestamp = bar_time
                 self.is_bullish_sweep = swept_high
         elif self.entered_liquidity_timestamp is not None:
@@ -136,7 +136,7 @@ class NYIFVGLiquiditySweepSetup(BaseSetup):
             else:
                 # If grace period has expired, reset everything and return False
                 if bar_time - self.grace_period_start >= self.grace_period:
-                    self.log.info("grace period expired, resetting")
+                    self.log.debug("grace period expired, resetting")
                     self.reset()
                     return False
         else:
