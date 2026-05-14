@@ -40,7 +40,11 @@ def atr(bars: list[Bar], period: int = 14) -> float | None:
         high = bars[i].high_f
         low = bars[i].low_f
         true_ranges.append(max(high - low, abs(high - prev_close), abs(low - prev_close)))
-    return sum(true_ranges[-period:]) / period
+    # Wilder smoothing: seed with the SMA of the first `period` TRs, then recursively apply ATR_i = (ATR_{i-1} * (period - 1) + TR_i) / period.
+    atr_value = sum(true_ranges[:period]) / period
+    for tr in true_ranges[period:]:
+        atr_value = (atr_value * (period - 1) + tr) / period
+    return atr_value
 
 
 @dataclass
