@@ -1,4 +1,4 @@
-from datetime import datetime, time, timedelta, timezone
+from datetime import date, datetime, time, timedelta, timezone
 from decimal import Decimal
 from enum import Enum
 from typing import assert_never
@@ -25,6 +25,7 @@ class NYIFVGLiquiditySweepSetup(BaseSetup):
         self.asia: tuple[float | None, float | None] = (None, None)
         self.london: tuple[float | None, float | None] = (None, None)
         self.current_session: tuple[float | None, float | None] = (None, None)
+        self.current_day: date | None = None
 
         self.entered_liquidity_timestamp: datetime | None = None
         self.is_bullish_sweep: bool | None = None
@@ -82,6 +83,7 @@ class NYIFVGLiquiditySweepSetup(BaseSetup):
             self.london = period_high_low(london_bars)
 
         self._discard_swept_levels()
+        self.current_day = today
 
         self.log.debug("previous day high/low: %s", self.previous_day)
         self.log.debug("asia session high/low: %s", self.asia)
@@ -270,7 +272,26 @@ class NYIFVGLiquiditySweepSetup(BaseSetup):
             setattr(self, earlier, (high, low))
 
     def _update_current_session(self, bar: Bar) -> None:
+        bar_date = datetime.fromisoformat(bar.timestamp).astimezone(timezone.utc).date()
+        if self.current_day is not None and bar_date != self.current_day:
+            self._rollover_day()
+        self.current_day = bar_date
         cur_high, cur_low = self.current_session
         new_high = bar.high_f if cur_high is None else max(cur_high, bar.high_f)
         new_low = bar.low_f if cur_low is None else min(cur_low, bar.low_f)
         self.current_session = (new_high, new_low)
+
+    def _rollover_day(self) -> None:
+        # Collapse yesterday's asia/london/NY ranges into previous_day, then clear
+        # today's sessions so current_session starts fresh for the new day.
+        self.log.debug("day rollover from %s", self.current_day)
+        sessions = (self.asia, self.london, self.current_session)
+        highs = [h for h, _ in sessions if h is not None]
+        lows = [l for _, l in sessions if l is not None]
+        self.previous_day = (
+            max(highs) if highs else None,
+            min(lows) if lows else None,
+        )
+        self.asia = (None, None)
+        self.london = (None, None)
+        self.current_session = (None, None)
