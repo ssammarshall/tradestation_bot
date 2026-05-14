@@ -38,6 +38,8 @@ class Strategy:
         self.log: Logger = getLogger(f"{self.name}")
 
     def startup(self) -> None:
+        self._current_num_of_trades = 0
+        self.reset()
         params = self.setup.history_params()
         if params:
             bars = self.market_data_service.get_bars(params).bars
@@ -46,8 +48,6 @@ class Strategy:
 
     def shutdown(self) -> None:
         self._is_subscribed = False
-        self._current_num_of_trades = 0
-        self.reset()
 
     def reset(self) -> None:
         self._setup_confirmed = False
@@ -55,6 +55,9 @@ class Strategy:
 
     def evaluate(self, event: StreamBarEvent) -> None:
         if not event.is_bar:
+            return
+
+        if self._current_num_of_trades >= self.max_num_of_trades:
             return
 
         bar = event.bar
@@ -103,7 +106,6 @@ class Strategy:
 
             self.log.info("entry at %s (trades today=%d)", bar.timestamp, self._current_num_of_trades)
             if self._current_num_of_trades >= self.max_num_of_trades:
-                self.log.info("max trades reached, shutting down")
-                self.shutdown()
+                self.log.info("max trades reached, no further entries this window")
             else:
                 self.reset()
