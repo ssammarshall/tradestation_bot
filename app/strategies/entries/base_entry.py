@@ -20,6 +20,7 @@ class BaseEntry(ABC):
         self.target_price = target_price
         self.resistance_level = resistance_level
         self.support_level = support_level
+        self.invalidated: bool = False
         self.log: Logger = getLogger(self.__class__.__name__)
 
     @abstractmethod
@@ -30,9 +31,11 @@ class BaseEntry(ABC):
         self.target_price = signal.target_price
         self.resistance_level = signal.resistance_level
         self.support_level = signal.support_level
+        self.invalidated = False
 
     def clear_signal(self) -> None:
         self.is_bullish = None
         self.target_price = None
         self.resistance_level = None
         self.support_level = None
+        self.invalidated = False

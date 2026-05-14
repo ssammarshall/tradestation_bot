@@ -45,6 +45,7 @@ class RetracementEntry(BaseEntry):
             level = float(self.support_level)
             if bar.close_f < level:
                 self.log.debug("price broke below support %s, invalidating", level)
+                self.invalidated = True
                 return False
             if not self._has_retraced:
                 if bar.close_f > level:
@@ -55,6 +56,7 @@ class RetracementEntry(BaseEntry):
             level = float(self.resistance_level)
             if bar.close_f > level:
                 self.log.debug("price broke above resistance %s, invalidating", level)
+                self.invalidated = True
                 return False
             if not self._has_retraced:
                 if bar.close_f < level:

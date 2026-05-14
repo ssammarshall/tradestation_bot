@@ -109,3 +109,6 @@ class Strategy:
                 self.log.info("max trades reached, no further entries this window")
             else:
                 self.reset()
+        elif self.entry.invalidated:
+            self.log.debug("entry invalidated at %s, resetting", bar.timestamp)
+            self.reset()
