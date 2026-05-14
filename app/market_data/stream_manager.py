@@ -72,3 +72,5 @@ class StreamManager:
             with self._lock:
                 self._threads.pop(key, None)
                 self._stop_events.pop(key, None)
+                self._params.pop(key, None)
+                self._callbacks.pop(key, None)
