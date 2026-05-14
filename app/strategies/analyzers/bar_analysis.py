@@ -31,6 +31,18 @@ def is_impulsive_bar(bar: Bar, threshold: float = 0.6) -> bool:
     return body / bar_range >= threshold
 
 
+def atr(bars: list[Bar], period: int = 14) -> float | None:
+    if len(bars) < period + 1:
+        return None
+    true_ranges: list[float] = []
+    for i in range(1, len(bars)):
+        prev_close = bars[i - 1].close_f
+        high = bars[i].high_f
+        low = bars[i].low_f
+        true_ranges.append(max(high - low, abs(high - prev_close), abs(low - prev_close)))
+    return sum(true_ranges[-period:]) / period
+
+
 @dataclass
 class FVG:
     is_bullish: bool
