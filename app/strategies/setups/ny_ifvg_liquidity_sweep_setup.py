@@ -5,7 +5,7 @@ from typing import assert_never
 
 from app.schemas.bars import Bar, BarHistoryParams, BarHistoryRequest, BarUnit
 from app.schemas.signals import EntrySignal
-from app.strategies.analyzers.bar_analysis import FVG, is_bullish_bar, is_impulsive_bar, period_high_low, detect_fvgs, detect_ifvg
+from app.strategies.analyzers.bar_analysis import FVG, atr, is_bullish_bar, is_impulsive_bar, period_high_low, detect_fvgs, detect_ifvg
 from app.strategies.setups.base_setup import BaseSetup
 
 
@@ -32,6 +32,9 @@ class NYIFVGLiquiditySweepSetup(BaseSetup):
         self.grace_period: timedelta = timedelta(minutes=10)
         self.bars_since_sweep: list[Bar] | None = None
         self.phase: Phase = Phase.SCANNING
+
+        self.atr_period: int = 14
+        self.min_atr: float = 14.0
 
     def history_params(self) -> BarHistoryParams:
         now = datetime.now(timezone.utc)
@@ -162,6 +165,9 @@ class NYIFVGLiquiditySweepSetup(BaseSetup):
         if minutes_back < 3:
             self.log.debug("not enough bars since sweep entry for ifvg detection (minutes_back=%d)", minutes_back)
             return False
+        # Guarantee enough bars for an accurate ATR calc at the current bar
+        minutes_back = max(minutes_back, self.atr_period + 1)
+        
         self._emit_history_request(minutes_back)
         self.phase = Phase.DETECTING_IFVG
         return False
@@ -169,6 +175,11 @@ class NYIFVGLiquiditySweepSetup(BaseSetup):
     # In DETECTING_IFVG, we scan bars_since_sweep for the IFVG pattern
     def _detect(self, bar: Bar) -> bool:
         assert self.bars_since_sweep is not None
+        atr_value = atr(self.bars_since_sweep, period=self.atr_period)
+        if atr_value is None or atr_value < self.min_atr:
+            self.log.debug("atr volatility floor not met (atr=%s, min=%s), resetting", atr_value, self.min_atr)
+            self.reset()
+            return False
         fvgs = detect_fvgs(self.bars_since_sweep)
         for fvg in fvgs:
             if fvg.is_bullish != self.is_bullish_sweep:
