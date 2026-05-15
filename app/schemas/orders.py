@@ -189,3 +189,87 @@ class GroupOrderResponse:
     def from_dict(cls, data: dict) -> GroupOrderResponse:
         results = [OrderResult.from_dict(o) for o in data.get("Orders", [])]
         return cls(orders=results)
+
+
+# ---------------------------------------------------------------------------
+# Order status streaming
+# ---------------------------------------------------------------------------
+
+# TradeStation short status codes from GET /v3/brokerage/stream/accounts/{accounts}/orders.
+# Terminal states mean the leg will not emit further fills.
+_TERMINAL_STATUSES = frozenset({
+    "FLL",  # Filled
+    "FPR",  # Filled / partially (terminal partial)
+    "CAN",  # Canceled
+    "EXP",  # Expired
+    "OUT",  # Out (canceled/expired by exchange)
+    "REJ",  # Rejected
+    "BRO",  # Broker rejected
+    "TSC",  # Trade server canceled
+    "UCH",  # Replaced (old order id is terminal)
+})
+
+
+@dataclass
+class OrderStatusParams:
+    """Query parameters for GET /v3/brokerage/stream/accounts/{accounts}/orders."""
+    account_id: str
+
+
+@dataclass
+class OrderUpdate:
+    """A single order status snapshot from the order stream."""
+    order_id: str
+    status: Optional[str] = None
+    symbol: Optional[str] = None
+    account_id: Optional[str] = None
+    filled_quantity: Optional[str] = None
+
+    @property
+    def is_terminal(self) -> bool:
+        return self.status in _TERMINAL_STATUSES
+
+    @property
+    def is_filled(self) -> bool:
+        return self.status == "FLL"
+
+    @classmethod
+    def from_dict(cls, data: dict) -> OrderUpdate:
+        return cls(
+            order_id=str(data.get("OrderID", "")),
+            status=data.get("Status"),
+            symbol=data.get("Symbol"),
+            account_id=data.get("AccountID"),
+            filled_quantity=data.get("FilledQuantity"),
+        )
+
+
+@dataclass
+class StreamOrderEvent:
+    """A single event from the order status stream."""
+    raw: dict
+    order: Optional[OrderUpdate] = None
+    heartbeat: Optional[str] = None
+    error: Optional[str] = None
+
+    @property
+    def is_order(self) -> bool:
+        return self.order is not None
+
+    @property
+    def is_heartbeat(self) -> bool:
+        return self.heartbeat is not None
+
+    @property
+    def is_error(self) -> bool:
+        return self.error is not None
+
+    @classmethod
+    def from_dict(cls, data: dict) -> StreamOrderEvent:
+        if "OrderID" in data:
+            return cls(raw=data, order=OrderUpdate.from_dict(data))
+        if "Heartbeat" in data:
+            return cls(raw=data, heartbeat=str(data["Heartbeat"]))
+        if "Error" in data:
+            return cls(raw=data, error=str(data["Error"]))
+        return cls(raw=data)
