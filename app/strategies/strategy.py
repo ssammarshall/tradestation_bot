@@ -3,7 +3,13 @@ from logging import Logger, getLogger
 
 from app.market_data.market_data_service import MarketDataService
 from app.orders.order_service import OrderService
-from app.schemas.bars import BarStatus, BarHistoryParams, StreamBarEvent
+from app.schemas.bars import Bar, BarStatus, BarHistoryParams, StreamBarEvent
+from app.schemas.orders import (
+    BracketOrderRequest,
+    GroupOrderResponse,
+    OrderRequest,
+    TradeAction,
+)
 from app.strategies.entries.base_entry import BaseEntry
 from app.strategies.setups.base_setup import BaseSetup
 
@@ -104,9 +110,8 @@ class Strategy:
         # Entry
         valid_entry = self.entry.is_valid(bar)
         if valid_entry:
+            self._place_bracket(bar)
             self._current_num_of_trades += 1
-
-            # TODO: execute trade via order service (use signal stop_loss/take_profit)
 
             self.log.info("entry at %s (trades today=%d)", bar.timestamp, self._current_num_of_trades)
             if self._current_num_of_trades >= self.max_num_of_trades:
@@ -116,3 +121,29 @@ class Strategy:
         elif self.entry.invalidated:
             self.log.debug("entry invalidated at %s, resetting", bar.timestamp)
             self.reset()
+
+    def _place_bracket(self, bar: Bar) -> GroupOrderResponse:
+        if self.entry.is_bullish is None:
+            raise ValueError("entry.is_bullish must be set before placing a bracket")
+        if self.entry.stop_loss is None or self.entry.take_profit is None:
+            raise ValueError("entry must have stop_loss and take_profit set before placing a bracket")
+
+        trade_action = TradeAction.BUY if self.entry.is_bullish else TradeAction.SELL_SHORT
+        entry_order = OrderRequest(
+            account_id=self.account_id,
+            symbol=self.symbol,
+            quantity=self.quantity,
+            trade_action=trade_action,
+        )
+        bracket = BracketOrderRequest(
+            entry=entry_order,
+            stop_loss_price=str(self.entry.stop_loss),
+            take_profit_price=str(self.entry.take_profit),
+        )
+        response = self.order_service.place_bracket_order(bracket)
+        order_ids = [r.order_id for r in response.orders if r.order_id]
+        errors = [r.error for r in response.orders if r.is_error]
+        if errors:
+            self.log.error("bracket placement returned errors at %s: %s", bar.timestamp, errors)
+        self.log.info("bracket placed at %s, order_ids=%s", bar.timestamp, order_ids)
+        return response
