@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from datetime import time
 from logging import Logger, getLogger
 
@@ -12,6 +13,17 @@ from app.schemas.orders import (
 )
 from app.strategies.entries.base_entry import BaseEntry
 from app.strategies.setups.base_setup import BaseSetup
+
+
+@dataclass
+class LiveBracket:
+    entry_order_id: str | None
+    stop_loss_order_id: str | None
+    take_profit_order_id: str | None
+
+    @property
+    def order_ids(self) -> list[str]:
+        return [oid for oid in (self.entry_order_id, self.stop_loss_order_id, self.take_profit_order_id) if oid]
 
 
 class Strategy:
@@ -45,10 +57,12 @@ class Strategy:
         self._current_num_of_trades = 0
         self._setup_confirmed: bool = False
         self._is_subscribed: bool = False
+        self._active_order: LiveBracket | None = None
         self.log: Logger = getLogger(f"{self.name}")
 
     def startup(self) -> None:
         self._current_num_of_trades = 0
+        self._active_order = None
         self.reset()
         params = self.setup.history_params()
         if params:
@@ -65,6 +79,9 @@ class Strategy:
 
     def evaluate(self, event: StreamBarEvent) -> None:
         if not event.is_bar:
+            return
+
+        if self._active_order is not None:
             return
 
         if self._current_num_of_trades >= self.max_num_of_trades:
@@ -141,9 +158,15 @@ class Strategy:
             take_profit_price=str(self.entry.take_profit),
         )
         response = self.order_service.place_bracket_order(bracket)
-        order_ids = [r.order_id for r in response.orders if r.order_id]
         errors = [r.error for r in response.orders if r.is_error]
         if errors:
             self.log.error("bracket placement returned errors at %s: %s", bar.timestamp, errors)
-        self.log.info("bracket placed at %s, order_ids=%s", bar.timestamp, order_ids)
+
+        legs = response.orders + [None] * (3 - len(response.orders))
+        self._active_order = LiveBracket(
+            entry_order_id=legs[0].order_id if legs[0] else None,
+            stop_loss_order_id=legs[1].order_id if legs[1] else None,
+            take_profit_order_id=legs[2].order_id if legs[2] else None,
+        )
+        self.log.info("bracket placed at %s, order_ids=%s", bar.timestamp, self._active_order.order_ids)
         return response
