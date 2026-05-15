@@ -34,8 +34,8 @@ class NYIFVGLiquiditySweepSetup(BaseSetup):
         self.bars_since_sweep: list[Bar] | None = None
         self.phase: Phase = Phase.SCANNING
 
-        self.atr_period: int = 14
-        self.min_atr: float = 14.0
+        self.atr_period: int = 20
+        self.min_atr: float = 20.0
 
     def history_params(self) -> BarHistoryParams:
         now = datetime.now(timezone.utc)
