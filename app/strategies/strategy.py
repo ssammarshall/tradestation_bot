@@ -13,6 +13,8 @@ class Strategy:
         self,
         name: str,
         symbol: str,
+        account_id: str,
+        quantity: str,
         setup: BaseSetup,
         entry: BaseEntry,
         trade_window_start: time,
@@ -24,6 +26,8 @@ class Strategy:
     ) -> None:
         self.name = name
         self.symbol = symbol
+        self.account_id = account_id
+        self.quantity = quantity
         self.setup = setup
         self.entry = entry
         self.trade_window_start = trade_window_start

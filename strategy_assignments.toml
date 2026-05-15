@@ -1,6 +1,7 @@
 [[assignments]]
 name = "ict_liquidity_sweep_ny_session_strategy"
 symbol = "MNQ"
+quantity = "1"
 unit = "Minute"
 interval = 1
 session_template = "USEQ24Hour"

@@ -5,6 +5,7 @@ from app.market_data.market_data_service import MarketDataService
 from app.orders.order_service import OrderService
 from app.schemas.bars import BarHistoryParams, BarUnit, SessionTemplate
 from app.strategies.strategy import Strategy
+from config.settings import Settings
 
 
 def _parse_time(time_str: str) -> datetime.time:
@@ -19,6 +20,8 @@ def load_strategy_assignments(
     with open(path, "rb") as f:
         data = tomllib.load(f)
 
+    account_id = Settings().active_account_id
+
     assignments = []
     for item in data.get("assignments", []):
         stream = BarHistoryParams(
@@ -32,6 +35,8 @@ def load_strategy_assignments(
             Strategy(
                 name=item["name"],
                 symbol=item["symbol"],
+                account_id=account_id,
+                quantity=str(item["quantity"]),
                 setup=item["setup"],
                 entry=item["entry"],
                 trade_window_start=_parse_time(item["trade_window_start"]),
