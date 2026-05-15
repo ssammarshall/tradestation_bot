@@ -118,14 +118,14 @@ To add new ones, implement the appropriate base class under [app/strategies/setu
 
 ### 7. Configure logging
 
-`logging.toml` controls log verbosity. The top-level `level` is the root level; `[overrides]` sets per-logger levels by name. Strategy assignments log under their `name`, and components like `StreamManager` use their class name.
+`logging.toml` controls log verbosity. The top-level `level` is the root level; `[overrides]` sets per-logger levels by name. Strategy assignments log under their `name`, and components like `MarketDataStreamManager` use their class name.
 
 ```toml
 level = "INFO"
 
 [overrides]
 "ict_liquidity_sweep_ny_session_strategy" = "DEBUG"
-"StreamManager" = "DEBUG"
+"MarketDataStreamManager" = "DEBUG"
 ```
 
 ## Running

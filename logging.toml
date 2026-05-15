@@ -2,4 +2,4 @@ level = "INFO"
 
 [overrides]
 "ict_liquidity_sweep_ny_session_strategy" = "DEBUG"
-"StreamManager" = "DEBUG"
+"MarketDataStreamManager" = "DEBUG"
