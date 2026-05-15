@@ -11,7 +11,7 @@ from app.schemas.bars import BarHistoryParams, StreamBarEvent
 _StreamKey = tuple  # (symbol, unit, interval, session_template)
 
 
-class StreamManager:
+class MarketDataStreamManager:
     def __init__(self, market_data_service: MarketDataService):
         self._service = market_data_service
         self._callbacks: dict[_StreamKey, list[Callable[[StreamBarEvent], None]]] = defaultdict(list)
