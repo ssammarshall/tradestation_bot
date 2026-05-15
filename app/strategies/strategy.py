@@ -9,6 +9,7 @@ from app.schemas.orders import (
     BracketOrderRequest,
     GroupOrderResponse,
     OrderRequest,
+    StreamOrderEvent,
     TradeAction,
 )
 from app.strategies.entries.base_entry import BaseEntry
@@ -138,6 +139,13 @@ class Strategy:
         elif self.entry.invalidated:
             self.log.debug("entry invalidated at %s, resetting", bar.timestamp)
             self.reset()
+
+    def on_order_event(self, event: StreamOrderEvent) -> None:
+        if not event.is_order or self._active_order is None:
+            return
+        if event.order.order_id not in self._active_order.order_ids:
+            return
+        self.log.debug("order event %s status=%s", event.order.order_id, event.order.status)
 
     def _place_bracket(self, bar: Bar) -> GroupOrderResponse:
         if self.entry.is_bullish is None:
