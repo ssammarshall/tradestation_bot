@@ -61,6 +61,10 @@ class Strategy:
         self._active_order: LiveBracket | None = None
         self.log: Logger = getLogger(f"{self.name}")
 
+    @property
+    def has_active_order(self) -> bool:
+        return self._active_order is not None
+
     def startup(self) -> None:
         self._current_num_of_trades = 0
         self._active_order = None
@@ -129,13 +133,7 @@ class Strategy:
         valid_entry = self.entry.is_valid(bar)
         if valid_entry:
             self._place_bracket(bar)
-            self._current_num_of_trades += 1
-
-            self.log.info("entry at %s (trades today=%d)", bar.timestamp, self._current_num_of_trades)
-            if self._current_num_of_trades >= self.max_num_of_trades:
-                self.log.info("max trades reached, no further entries this window")
-            else:
-                self.reset()
+            self.log.info("entry submitted at %s", bar.timestamp)
         elif self.entry.invalidated:
             self.log.debug("entry invalidated at %s, resetting", bar.timestamp)
             self.reset()
@@ -143,9 +141,41 @@ class Strategy:
     def on_order_event(self, event: StreamOrderEvent) -> None:
         if not event.is_order or self._active_order is None:
             return
-        if event.order.order_id not in self._active_order.order_ids:
+
+        update = event.order
+        if update.order_id not in self._active_order.order_ids:
             return
-        self.log.debug("order event %s status=%s", event.order.order_id, event.order.status)
+
+        self.log.debug("order event %s status=%s", update.order_id, update.status)
+
+        if not update.is_terminal:
+            return
+
+        is_entry_leg = update.order_id == self._active_order.entry_order_id
+        is_exit_leg = update.order_id in (
+            self._active_order.stop_loss_order_id,
+            self._active_order.take_profit_order_id,
+        )
+
+        if is_exit_leg and update.is_filled:
+            self._current_num_of_trades += 1
+            self.log.info(
+                "trade closed via %s (trades today=%d)",
+                update.order_id,
+                self._current_num_of_trades,
+            )
+            if self._current_num_of_trades >= self.max_num_of_trades:
+                self.log.info("max trades reached, no further entries this window")
+            self._active_order = None
+            self.reset()
+        elif is_entry_leg and not update.is_filled:
+            self.log.info(
+                "entry leg %s terminal without fill (%s); abandoning bracket",
+                update.order_id,
+                update.status,
+            )
+            self._active_order = None
+            self.reset()
 
     def _place_bracket(self, bar: Bar) -> GroupOrderResponse:
         if self.entry.is_bullish is None:
