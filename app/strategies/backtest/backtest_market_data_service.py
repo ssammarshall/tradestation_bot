@@ -6,6 +6,7 @@ from typing import Optional
 
 from app.market_data.market_data_service import MarketDataService
 from app.schemas.bars import Bar, BarHistoryParams, BarsResponse
+from app.schemas.symbols import SymbolDetails
 
 
 # TradeStation caps barsback per request; stay safely under.
@@ -78,6 +79,9 @@ class BacktestMarketDataService:
     @staticmethod
     def _key(params: BarHistoryParams) -> tuple[str, str, int]:
         return (params.symbol, params.unit.value, params.interval)
+
+    def get_symbol_details(self, symbol: str) -> SymbolDetails:
+        return self._real.get_symbol_details(symbol)
 
     def prefetch(self, template: BarHistoryParams) -> list[Bar]:
         key = self._key(template)
