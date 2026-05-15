@@ -12,10 +12,20 @@ class RetracementEntry(BaseEntry):
         symbol: str,
         is_bullish: bool | None = None,
         target_price: Decimal | None = None,
+        stop_loss: Decimal | None = None,
+        take_profit: Decimal | None = None,
         resistance_level: Decimal | None = None,
         support_level: Decimal | None = None,
     ) -> None:
-        super().__init__(symbol, is_bullish, target_price, resistance_level, support_level)
+        super().__init__(
+            symbol,
+            is_bullish=is_bullish,
+            target_price=target_price,
+            stop_loss=stop_loss,
+            take_profit=take_profit,
+            resistance_level=resistance_level,
+            support_level=support_level,
+        )
         self._has_retraced: bool = False
 
     def apply_signal(self, signal: EntrySignal) -> None:
