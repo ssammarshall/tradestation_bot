@@ -31,12 +31,14 @@ def load_strategy_assignments(
             barsback=item.get("barsback"),
             session_template=SessionTemplate(item.get("session_template", "Default")),
         )
+        details = market_data_service.get_symbol_details(item["symbol"])
         assignments.append(
             Strategy(
                 name=item["name"],
                 symbol=item["symbol"],
                 account_id=account_id,
                 quantity=str(item["quantity"]),
+                point_value=details.point_value,
                 setup=item["setup"],
                 entry=item["entry"],
                 trade_window_start=_parse_time(item["trade_window_start"]),

@@ -34,6 +34,7 @@ class Strategy:
         symbol: str,
         account_id: str,
         quantity: str,
+        point_value: float,
         setup: BaseSetup,
         entry: BaseEntry,
         trade_window_start: time,
@@ -47,6 +48,7 @@ class Strategy:
         self.symbol = symbol
         self.account_id = account_id
         self.quantity = quantity
+        self.point_value = point_value
         self.setup = setup
         self.entry = entry
         self.trade_window_start = trade_window_start
