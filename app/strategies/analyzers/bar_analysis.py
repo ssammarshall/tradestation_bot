@@ -55,6 +55,19 @@ class FVG:
     bar_3: Bar
     range_f: float
 
+    @property
+    def total_range(self) -> float:
+        highs = (self.bar_1.high_f, self.bar_2.high_f, self.bar_3.high_f)
+        lows = (self.bar_1.low_f, self.bar_2.low_f, self.bar_3.low_f)
+        return max(highs) - min(lows)
+
+    @property
+    def gap_ratio(self) -> float:
+        total = self.total_range
+        if total <= 0:
+            return 0.0
+        return self.range_f / total
+
 
 def detect_fvgs(bars: list[Bar]) -> list[FVG]:
     fvgs: list[FVG] = []
