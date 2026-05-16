@@ -6,8 +6,9 @@ from app.schemas.signals import EntrySignal
 
 
 class BaseSetup(ABC):
-    def __init__(self, symbol: str) -> None:
+    def __init__(self, symbol: str, risk_reward_ratio: float = 1.0) -> None:
         self.symbol: str = symbol
+        self.risk_reward_ratio: float = risk_reward_ratio
         self.pending_request: BarHistoryRequest | None = None
         self.pending_signal: EntrySignal | None = None
         self.log: Logger = getLogger(self.__class__.__name__)
