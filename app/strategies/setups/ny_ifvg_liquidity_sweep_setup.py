@@ -52,6 +52,11 @@ class NYIFVGLiquiditySweepSetup(BaseSetup):
         )
 
     def startup(self, bars: list[Bar]) -> None:
+        self.previous_day = (None, None)
+        self.asia = (None, None)
+        self.london = (None, None)
+        self.current_session = (None, None)
+
         if not bars:
             return
         self.log.debug("history returned %d bars, first=%s, last=%s", len(bars), bars[0].timestamp, bars[-1].timestamp)
