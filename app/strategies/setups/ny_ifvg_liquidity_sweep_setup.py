@@ -16,8 +16,8 @@ class Phase(str, Enum):
 
 
 class NYIFVGLiquiditySweepSetup(BaseSetup):
-    def __init__(self, symbol: str) -> None:
-        super().__init__(symbol)
+    def __init__(self, symbol: str, risk_reward_ratio: float = 1.0) -> None:
+        super().__init__(symbol, risk_reward_ratio)
 
         # (high, low) for the previous day, Asia session, and London session.
         # A side is set to None once it has been swept by a later session.
@@ -189,10 +189,6 @@ class NYIFVGLiquiditySweepSetup(BaseSetup):
             if detect_ifvg(fvg, bar):
                 self.log.info("confirmed ifvg at %s, fvg inverted: %s", bar.timestamp, fvg.bar_3.timestamp)
                 signal = self._build_signal(fvg, bar)
-                if signal is None:
-                    self.log.warning("no take_profit session level available, discarding ifvg")
-                    self.reset()
-                    return False
                 self.log.debug("emitting entry signal: target_price=%s, stop_loss=%s, take_profit=%s", signal.target_price, signal.stop_loss, signal.take_profit)
                 self.pending_signal = signal
                 self.phase = Phase.CONFIRMED
@@ -201,20 +197,19 @@ class NYIFVGLiquiditySweepSetup(BaseSetup):
         self.reset()
         return False
 
-    def _build_signal(self, fvg: FVG, bar: Bar) -> EntrySignal | None:
+    def _build_signal(self, fvg: FVG, bar: Bar) -> EntrySignal:
         target_price = Decimal(fvg.bar_2.open)
         resistance_level: Decimal | None = None
         support_level: Decimal | None = None
+        ratio = Decimal(str(self.risk_reward_ratio))
         if fvg.is_bullish:
             resistance_level = Decimal(bar.open)
             stop_loss = Decimal(fvg.bar_3.high)
+            take_profit = target_price - (stop_loss - target_price) * ratio
         else:
             support_level = Decimal(bar.open)
             stop_loss = Decimal(fvg.bar_3.low)
-
-        take_profit = self._next_closest_session_level(bar)
-        if take_profit is None:
-            return None
+            take_profit = target_price + (target_price - stop_loss) * ratio
 
         return EntrySignal(
             is_bullish=not self.is_bullish_sweep,
@@ -224,19 +219,6 @@ class NYIFVGLiquiditySweepSetup(BaseSetup):
             resistance_level=resistance_level,
             support_level=support_level,
         )
-
-    def _next_closest_session_level(self, bar: Bar) -> Decimal | None:
-        current_price = bar.open_f
-        sessions = (self.previous_day, self.asia, self.london, self.current_session)
-        if self.is_bullish_sweep:
-            lows = [low for _, low in sessions if low is not None and low < current_price]
-            if not lows:
-                return None
-            return Decimal(str(max(lows)))
-        highs = [high for high, _ in sessions if high is not None and high > current_price]
-        if not highs:
-            return None
-        return Decimal(str(min(highs)))
 
     def _emit_history_request(self, minutes_back: int) -> None:
         self.log.debug("emitting history request for %d minutes of bars since sweep entry", minutes_back)
