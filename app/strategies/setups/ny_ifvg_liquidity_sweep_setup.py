@@ -36,6 +36,7 @@ class NYIFVGLiquiditySweepSetup(BaseSetup):
 
         self.atr_period: int = 20
         self.min_atr: float = 20.0
+        self.min_gap_ratio: float = 0.15
 
     def history_params(self) -> BarHistoryParams:
         now = datetime.now(timezone.utc)
@@ -185,6 +186,9 @@ class NYIFVGLiquiditySweepSetup(BaseSetup):
         fvgs = detect_fvgs(self.bars_since_sweep)
         for fvg in fvgs:
             if fvg.is_bullish != self.is_bullish_sweep:
+                continue
+            if fvg.gap_ratio < self.min_gap_ratio:
+                self.log.debug("fvg gap ratio %.3f below min %.3f, skipping", fvg.gap_ratio, self.min_gap_ratio)
                 continue
             if detect_ifvg(fvg, bar):
                 self.log.info("confirmed ifvg at %s, fvg inverted: %s", bar.timestamp, fvg.bar_3.timestamp)
