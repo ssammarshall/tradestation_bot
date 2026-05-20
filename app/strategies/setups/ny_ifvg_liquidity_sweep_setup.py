@@ -25,6 +25,9 @@ class NYIFVGLiquiditySweepSetup(BaseSetup):
         self.asia: tuple[float | None, float | None] = (None, None)
         self.london: tuple[float | None, float | None] = (None, None)
         self.current_session: tuple[float | None, float | None] = (None, None)
+        # (high_valid, low_valid) - a current_session side only counts as a
+        # sweep target once it has surpassed a previous session level.
+        self.current_session_valid: tuple[bool, bool] = (False, False)
         self.current_day: date | None = None
 
         self.entered_liquidity_timestamp: datetime | None = None
@@ -56,6 +59,7 @@ class NYIFVGLiquiditySweepSetup(BaseSetup):
         self.asia = (None, None)
         self.london = (None, None)
         self.current_session = (None, None)
+        self.current_session_valid = (False, False)
 
         if not bars:
             return
@@ -73,7 +77,7 @@ class NYIFVGLiquiditySweepSetup(BaseSetup):
             if ts.date() == prev_day:
                 prev_day_bars.append(bar)
             elif ts.date() == today:
-                if time(0, 0) <= ts.time() < time(9, 0):
+                if time(0, 0) <= ts.time() < time(8, 0):
                     asia_bars.append(bar)
                 elif time(8, 0) <= ts.time() < time(13, 0):
                     london_bars.append(bar)
@@ -98,7 +102,14 @@ class NYIFVGLiquiditySweepSetup(BaseSetup):
     def is_valid(self, bar: Bar) -> bool:
         # Snapshot before updating so sweep checks compare the bar's close
         # against the session high/low up to (but not including) this bar.
-        prev_session = self.current_session
+        # Mask out current_session sides that have not yet surpassed a prior
+        # session level - those are internal range, not sweepable liquidity.
+        cur_high, cur_low = self.current_session
+        high_valid, low_valid = self.current_session_valid
+        prev_session = (
+            cur_high if high_valid else None,
+            cur_low if low_valid else None,
+        )
         self._update_current_session(bar)
 
         match self.phase:
@@ -272,6 +283,18 @@ class NYIFVGLiquiditySweepSetup(BaseSetup):
         new_low = bar.low_f if cur_low is None else min(cur_low, bar.low_f)
         self.current_session = (new_high, new_low)
 
+        # A current_session side becomes a valid sweep target once it has
+        # surpassed a previous session high/low. The flag is sticky for the
+        # rest of the session - a level that swept liquidity stays sweepable
+        # even after that prior level is discarded by _discard_swept_levels.
+        prior = (self.previous_day, self.asia, self.london)
+        high_valid, low_valid = self.current_session_valid
+        if not high_valid and any(h is not None and new_high > h for h, _ in prior):
+            high_valid = True
+        if not low_valid and any(l is not None and new_low < l for _, l in prior):
+            low_valid = True
+        self.current_session_valid = (high_valid, low_valid)
+
     def _rollover_day(self) -> None:
         # Collapse yesterday's asia/london/NY ranges into previous_day, then clear
         # today's sessions so current_session starts fresh for the new day.
@@ -286,3 +309,4 @@ class NYIFVGLiquiditySweepSetup(BaseSetup):
         self.asia = (None, None)
         self.london = (None, None)
         self.current_session = (None, None)
+        self.current_session_valid = (False, False)
