@@ -38,7 +38,7 @@ class NYIFVGLiquiditySweepSetup(BaseSetup):
         self.phase: Phase = Phase.SCANNING
 
         self.atr_period: int = 20
-        self.min_atr: float = 28.0
+        self.min_atr: float = 26.0
         self.min_gap_ratio: float = 0.15
 
     def history_params(self) -> BarHistoryParams:
