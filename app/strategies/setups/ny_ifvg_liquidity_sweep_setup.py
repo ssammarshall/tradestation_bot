@@ -16,7 +16,7 @@ class Phase(str, Enum):
 
 
 class NYIFVGLiquiditySweepSetup(BaseSetup):
-    def __init__(self, symbol: str, risk_reward_ratio: float = 1.0) -> None:
+    def __init__(self, symbol: str, risk_reward_ratio: float = 1.5) -> None:
         super().__init__(symbol, risk_reward_ratio)
 
         # (high, low) for the previous day, Asia session, and London session.
@@ -38,7 +38,7 @@ class NYIFVGLiquiditySweepSetup(BaseSetup):
         self.phase: Phase = Phase.SCANNING
 
         self.atr_period: int = 20
-        self.min_atr: float = 20.0
+        self.min_atr: float = 28.0
         self.min_gap_ratio: float = 0.15
 
     def history_params(self) -> BarHistoryParams:
