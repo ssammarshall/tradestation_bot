@@ -17,7 +17,7 @@ order_service = OrderService(client)
 backtester = Backtester(
     market_data_service=market_data_service,
     order_service=order_service,
-    days_back=30,
+    days_back=100,
 )
 
 try:
